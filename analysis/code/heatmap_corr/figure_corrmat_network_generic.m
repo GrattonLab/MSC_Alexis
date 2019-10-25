@@ -38,7 +38,7 @@ end
 % My favorite colormap - edit if you want a different one
 %load /data/cn5/caterina/PDgrant/scripts/better_jet_colormap.mat;
 %colormap(better_jet_colormap_diff);
-load /Users/Alexis/Box/Quest_Backup/Scripts/Scripts_general/caterina_colormap_betterjet.mat;
+load ~/Box/Quest_Backup/Scripts/Scripts_general/caterina_colormap_betterjet.mat;
 colormap(mycmap);
 
 % put lines between the networks
