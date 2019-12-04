@@ -6,3 +6,7 @@ Made correlation maps of each participants networks to see if there were distinc
 10/11/19
 Looked at parcels on workbench came up with a bunch of errors on reading gifti's. All mem parcels across subs 02, 05, and 06 looked identical something wrong with matlab script
 
+
+12/4/19
+In order to use mvpa2 in jupyter notebook must need kernel 2.7 only compatible with older versions. Make ipykernel 2.7 then download mvpa through conda install https://anaconda.org/conda-forge/pymvpa2
+
