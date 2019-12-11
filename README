@@ -10,3 +10,5 @@ Looked at parcels on workbench came up with a bunch of errors on reading gifti's
 12/4/19
 In order to use mvpa2 in jupyter notebook must need kernel 2.7 only compatible with older versions. Make ipykernel 2.7 (will need to source activate ipykernel_py2 to download mvpa) then download mvpa through conda install https://anaconda.org/conda-forge/pymvpa2
 
+12/11/19
+built efficiency scripts to loop over matfile convert to numpy arrays and take the upper triangle of the corelation matrix then run through SVM with leave one day out cross validation scheme. Yielding interesting results
