@@ -1,4 +1,4 @@
 Test_variables,mem,mixed,motor
-mem,1.0,1.0,1.0
-mixed,1.0,1.0,1.0
+mem,0.5,0.5,0.5
+mixed,0.2,0.2,0.2
 motor,1.0,1.0,1.0
