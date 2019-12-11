@@ -951,28 +951,28 @@ if ~noFeatSelect
         if option ~=3
             % Consensusize Feature List
 %             for f = 1:length(numFeatures)
-% %                 consensusCount = 1; disp(['Consensusizing ',num2str(numFeatures(f)),' Feautres'])
-% %                 u_featureList = unique(squeeze(featureList(:,:,1,f)),'rows');
-% %                 for i = 1:length(u_featureList)
-% %                     count = 1;
-% %                     for n = 2:size(featureList,3)
-% %                         if ismember(squeeze(u_featureList(i,:)),squeeze(featureList(:,:,n,f)),'rows')
-% %                             count = count+1;
-% %                         else
-% %                             n = size(featureList,3);
-% %                         end
-% %                     end
-% %                     
-% %                     if count >= size(featureList,3) && u_featureList(i,1) > 0
-% %                         consensusFeatureList{f,1}(consensusCount,:) = u_featureList(i,:);
-% %                         consensusCount = consensusCount+1;
-% %                     end
-% %                 end
+%                 consensusCount = 1; disp(['Consensusizing ',num2str(numFeatures(f)),' Feautres'])
+%                 u_featureList = unique(squeeze(featureList(:,:,1,f)),'rows');
+%                 for i = 1:length(u_featureList)
+%                     count = 1;
+%                     for n = 2:size(featureList,3)
+%                         if ismember(squeeze(u_featureList(i,:)),squeeze(featureList(:,:,n,f)),'rows')
+%                             count = count+1;
+%                         else
+%                             n = size(featureList,3);
+%                         end
+%                     end
+%                     
+%                     if count >= size(featureList,3) && u_featureList(i,1) > 0
+%                         consensusFeatureList{f,1}(consensusCount,:) = u_featureList(i,:);
+%                         consensusCount = consensusCount+1;
+%                     end
+%                 end
 %                 
 % 
 %                 disp(['Number of consensus features = ',num2str(consensusCount-1)])
 %             end
-            
+%             
 %             for f = 1:length(numFeatures)
 %                 for i = 1:length(featureList(:,:,:,f))
 %                     consensusFeatureMat(consensusFeatureList{f}(i,1),consensusFeatureList{f}(i,2),f) = 1;
