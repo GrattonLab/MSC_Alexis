@@ -35,3 +35,10 @@ MSC02_motor=parcel_corrmat;
 %MSC02_motor(isinf(MSC02_motor)|isnan(MSC02_motor)) = 0; % Replace NaNs and infinite values with zeros
 
 results=svm_scripts_beta(MSC02_mem_rest, [ones(10,1); -ones(10,1)],0,MSC02_motor,[ones(10,1)],0)
+
+
+
+idx_rand = randperm(20);
+results=svm_scripts_beta(MSC03_mem_rest, labels(idx_rand),0,0,0,0)
+results=svm_scripts_beta(MSC03_mem_rest, [ones(10,1); -ones(10,1)],[200:200:1000],0,0,0)
+mean((sum(results.predictedTestLabels(1:10,:)==1)+sum(results.predictedTestLabels(11:20,:)==-1))./20)
