@@ -1,8 +1,8 @@
 clear;
 clear all;
-load('/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/mem/MSC02_parcel_corrmat.mat');
+load('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/MSC02_parcel_corrmat.mat');
 MSC02_mem=parcel_corrmat;
-load('/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/rest/MSC02_parcel_corrmat.mat');
+load('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/MSC02_parcel_corrmat.mat');
 MSC02_rest=parcel_corrmat;
 %concatenating memory and rest along third dimension first 10 days are task
 %then rest
