@@ -1,6 +1,6 @@
-load('/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/mem/MSC02_parcel_corrmat.mat');
+load('/Users/Alexis/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/mem/MSC02_parcel_corrmat.mat');
 MSC02_mem=parcel_corrmat;
-load('/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/rest/MSC02_parcel_corrmat.mat');
+load('/Users/Alexis/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/rest/MSC02_parcel_corrmat.mat');
 MSC02_rest=parcel_corrmat;
 %MSC02_mem(isinf(MSC02_mem)|isnan(MSC02_mem)) = 0; % Replace NaNs and infinite values with zeros
 %MSC02_rest(isinf(MSC02_rest)|isnan(MSC02_rest)) = 0; % Replace NaNs and infinite values with zeros
