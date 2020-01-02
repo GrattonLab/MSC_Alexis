@@ -2,3 +2,4 @@ subs={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC08','MSC09','M
 for i=1:10
     SS(subs{i})
 end
+
