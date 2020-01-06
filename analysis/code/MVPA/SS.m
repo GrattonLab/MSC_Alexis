@@ -20,9 +20,9 @@ function SS(sub)
             testLabels= [ones(10,1)]
             %for random permutations
             results=svm_scripts_beta(train,trainLabels(idx_rand),0,test,testLabels(test_rand),0)
-            %results=svm_scripts_beta(train, [ones(10,1); -ones(10,1)],0,test,[ones(10,1)],0)
-            saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/test_' trainList{i} '_train_' predictList{j} sub '.mat']
-            %saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/test_' trainList{i} '_train_' predictList{j} sub '.mat']
+            %results=svm_scripts_beta(train, trainLabels,0,test,testLabels,0)
+            saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/results_mat/test_' predictList{j} '_train_' trainList{i} sub '.mat']
+            %saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/regular_test/results_mat/test_' predictList{j} '_train_' trainList{i} sub '.mat']
             save(saveName, 'results')
         end
     end
