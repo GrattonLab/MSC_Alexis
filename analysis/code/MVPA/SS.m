@@ -1,4 +1,4 @@
-function SS(sub)
+ function SS(sub)
     trainList={'mem','mixed','motor'}
     predictList={'mem','mixed','motor'}
     myFolder='~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' %defining working directory

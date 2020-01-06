@@ -1,24 +1,28 @@
-subList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC08','MSC09','MSC10'};
-trainList={'mem','mixed','motor'};
-predictList={'mem','mixed','motor'};
-%create empty cell to store
-C=cell(3,30)
-for i=1:10
-    for j=1:3
-        for k=1:3
-                %if test is the same as train put a zero
-                if j==k
-                    C{j,i}=0
-                else
-            %open randomly permuted file
-                    results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/test_' trainList{j} '_train_' predictList{k} subList{i} '.mat']
-                    load(results)
-            %calculate the accuracy 
-                    acc=mean((sum(results.predictedTestLabels(1:10,:)==1))./10)
-                    C{j,i}=acc
-                end 
-            end
-        end
-    end 
-
-
+ function random(sub)
+memFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_corrmat.mat']
+load(memFC)
+mem=parcel_corrmat
+restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_corrmat.mat']
+load(restFC)
+r=parcel_corrmat
+train=cat(3, mem, r)
+testFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_corrmat.mat']
+load(testFC)
+test=parcel_corrmat
+C=[]
+for i=1:1000
+    %iterate through randomely permuting the labels 1000 times
+    idx_rand = randperm(20)
+    trainLabels = [ones(10,1);-ones(10,1)]
+    test_rand=randperm(10)
+    testLabels= [ones(10,1)]
+    %for random permutations
+    results=svm_scripts_beta(train,trainLabels(idx_rand),0,test,testLabels(test_rand),0)
+    %calculate the mean
+    acc=mean((sum(results.predictedTestLabels(1:10,:)==1))./10)
+    %save to a table
+    C=[C;{acc}];
+    sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/permuted_' sub '_accRandom.csv']
+    writetable(T, sname, 'WriteRowNames', true)
+end 
+ end 
