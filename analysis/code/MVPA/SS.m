@@ -3,8 +3,6 @@ function SS(sub)
     predictList={'mem','mixed','motor'}
     myFolder='~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' %defining working directory
     for i=1:3
-        %baseFileName=trainList{i} '/' sub '_parcel_corrmat.mat'
-        %fullFileName = fullfile(myFolder, baseFileName);
         taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' trainList{i} '/' sub '_parcel_corrmat.mat']
         load(taskFC)
         t=parcel_corrmat

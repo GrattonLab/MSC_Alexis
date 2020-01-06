@@ -1,7 +1,6 @@
 function accScore(sub)
     trainList={'mem','mixed','motor'}
     predictList={'mem','mixed','motor'}
-    %myFolder='~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/regular_test/' %defining working directory
     %create empty cell to store
     C=cell(3,3)
     for i=1:3
