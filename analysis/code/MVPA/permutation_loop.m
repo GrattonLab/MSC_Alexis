@@ -1,4 +1,4 @@
- function random(sub)
+ function x=permutation_loop(sub)
 memFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_corrmat.mat']
 load(memFC)
 mem=parcel_corrmat
@@ -10,8 +10,8 @@ testFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_corrm
 load(testFC)
 test=parcel_corrmat
 C=[]
-for i=1:1000
-    %iterate through randomely permuting the labels 1000 times
+for i=1:100
+    %iterate through randomely permuting the labels 100 times
     idx_rand = randperm(20)
     trainLabels = [ones(10,1);-ones(10,1)]
     test_rand=randperm(10)
@@ -22,7 +22,10 @@ for i=1:1000
     acc=mean((sum(results.predictedTestLabels(1:10,:)==1))./10)
     %save to a table
     C=[C;{acc}];
-    sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/permuted_' sub '_accRandom.csv']
-    writetable(T, sname, 'WriteRowNames', true)
-end 
+end
+T=cell2table(C)
+sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/permuted_' sub '_accRandom.csv']
+writetable(T, sname, 'WriteRowNames', true)
+B=cell2mat(C)
+x=mean(B)
  end 
