@@ -20,7 +20,7 @@ function DS(task)
             test=cat(3, tt, tr)
             %different subject same task
             results=svm_scripts_beta(train, [ones(10,1); -ones(10,1)],0,test,[ones(10,1); -ones(10,1)],0)
-            saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/diff_sub_test/train_' trainList{i} '_test_' predictList{j} task '.mat']
+            saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/train_' trainList{i} '_test_' predictList{j} task '.mat']
             save(saveName, 'results')
         end
     end
