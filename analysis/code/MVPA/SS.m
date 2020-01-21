@@ -16,10 +16,9 @@
             test=parcel_corrmat
             idx_rand = randperm(20)
             trainLabels = [ones(10,1);-ones(10,1)]
-            test_rand=randperm(10)
             testLabels= [ones(10,1)]
             %for random permutations
-            results=svm_scripts_beta(train,trainLabels(idx_rand),0,test,testLabels(test_rand),0)
+            results=svm_scripts_beta(train,trainLabels(idx_rand),0,test,testLabels,0)
             %results=svm_scripts_beta(train, trainLabels,0,test,testLabels,0)
             saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/random_permutation_test/results_mat/test_' predictList{j} '_train_' trainList{i} sub '.mat']
             %saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/within_sub_test/results_mat/test_' predictList{j} '_train_' trainList{i} sub '.mat']
