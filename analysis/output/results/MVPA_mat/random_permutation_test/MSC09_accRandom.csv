@@ -1,4 +1,4 @@
 Row,mem,mixed,motor
-mem,0,0.045,0
-mixed,0.8,0,0
-motor,0.08,0,0
+mem,0,0.005,0
+mixed,0.865,0,0
+motor,0.165,0.005,0
