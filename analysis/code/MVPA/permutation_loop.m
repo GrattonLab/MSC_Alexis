@@ -10,14 +10,14 @@ testFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_corrm
 load(testFC)
 test=parcel_corrmat
 C=[]
-for i=1:100
-    %iterate through randomely permuting the labels 100 times
+for i=1:10
+    %iterate through randomely permuting the labels 10 times across 10 subs
     idx_rand = randperm(20)
     trainLabels = [ones(10,1);-ones(10,1)]
-    test_rand=randperm(10)
+    %test_rand=randperm(10)
     testLabels= [ones(10,1)]
     %for random permutations
-    results=svm_scripts_beta(train,trainLabels(idx_rand),0,test,testLabels(test_rand),0)
+    results=svm_scripts_beta(train,trainLabels(idx_rand),0,test,testLabels,0)
     %calculate the mean
     acc=mean((sum(results.predictedTestLabels(1:10,:)==1))./10)
     %save to a table
