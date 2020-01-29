@@ -15,7 +15,6 @@ for i=1:10
     %iterate through randomely permuting the labels 10 times across 10 subs
     idx_rand = randperm(20)
     trainLabels = [ones(10,1);-ones(10,1)]
-    %test_rand=randperm(10)
     testLabels= [ones(10,1)]
     %How accurate are the scambles labels?
     t=trainLabels(idx_rand)
