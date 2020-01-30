@@ -13,10 +13,16 @@ function LO1DAY(sub)
         %then rest
         
         %select good days
-        %good_task = ~isna
+        good_task = ~isnan(squeeze(sum(sum(t,2),1)));
+        good_rest = ~isnan(squeeze(sum(sum(t,2),1)));
+        good_days = logical(good_task.*good_rest);
+
+        %
+        t_good = t(:,:,good_days);
+        r_good = r(:,:,good_days)
         
         %select train and test indices
-        nsamples = size(taskFC,3);
+        nsamples = sum(goo);
         sample_inds = [1:nsamples];
         
         for t = 1:nsamples
