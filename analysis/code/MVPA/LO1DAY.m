@@ -26,7 +26,7 @@ function LO1DAY(sub)
         %select good days
         good_task = ~isnan(squeeze(sum(sum(taskFC,2),1)));
         good_rest = ~isnan(squeeze(sum(sum(restFC,2),1)));
-        only_good = good_task .* good_rest
+        only_good = logical(good_task .* good_rest);
         taskFC_clean = taskFC(:,:,only_good);
         restFC_clean= restFC(:,:, only_good);
         
