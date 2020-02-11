@@ -16,5 +16,8 @@ function timeseries_split(sub)
         timeSlice=round(size(masked_time,1)/2);
         time1=masked_time(1:timeSlice, :);
         time2=masked_time(timeSlice:end, :);
+        t1=corr(time1);
+        t2=corr(time2);
+        t=cat(3, t1, t2);
         
 end 
