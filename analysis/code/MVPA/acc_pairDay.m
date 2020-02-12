@@ -14,7 +14,7 @@ end
 T=cell2table(C)
 T.Properties.VariableNames=trainList
 %T.Properties.RowNames=predictList
-sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/LO1DAY/' sub '_acc.csv']
+sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/LO1DAY/' sub '_timeSeries_acc.csv']
 writetable(T, sname, 'WriteRowNames', true)
 %type sname
 end 
