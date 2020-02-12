@@ -1,27 +1,39 @@
-function LO1DAY(sub)
+function pairDays(sub)
     %open all the relevant files
     %motor
-    motorFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/' sub '_parcel_corrmat.mat'];
+    %motorFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/' sub '_parcel_corrmat.mat'];
+    motorFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/corrmats_timesplit/' sub '_parcel_corrmat.mat'];
     motFile=load(motorFC);
-    motor=motFile.parcel_corrmat;
+    motor=motFile.motorFC_all;
     %memory
-    memoryFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_corrmat.mat'];
+    %memoryFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_corrmat.mat'];
+    memoryFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/corrmats_timesplit/' sub '_parcel_corrmat.mat'];
     memFile=load(memoryFC);
-    mem=memFile.parcel_corrmat;
+    mem=memFile.memFC_all;
     %mixed
-    mixedFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_corrmat.mat'];
-    mixFile=load(mixedFC);
-    mixed=mixFile.parcel_corrmat;
+    %mixedFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_corrmat.mat'];
+    %mixFile=load(mixedFC);
+    %mixed=mixFile.parcel_corrmat;
+    
+    GlassmixedFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/corrmats_timesplit/' sub '_AllGlass_parcel_corrmat.mat'];
+    GlassmixFile=load(GlassmixedFC);
+    glass=GlassmixFile.glassFC_all;
+    
+    SemmixedFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/corrmats_timesplit/' sub '_AllSemantic_parcel_corrmat.mat'];
+    SemmixFile=load(SemmixedFC);
+    sem=SemmixFile.semFC_all;
+    
     %rest
-    restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_corrmat.mat'];
+    %restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_corrmat.mat'];
+    restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/corrmats_timesplit/' sub '_parcel_corrmat.mat'];
     restFile=load(restFC);
-    rest=restFile.parcel_corrmat;
-    taskList={motor,mem,mixed};
-    taskListNames = {'motor', 'mem', 'mixed'}
+    rest=restFile.restFC_all;
+    taskList={motor,mem, glass, sem};
+    taskListNames = {'motor', 'mem', 'glass', 'sem'}
     %myFolder='~/Desktop/MSC_Alexis/analysis/data/mvpa_data/'; %defining working directory
     
     for i=1:length(taskList)
-        taskFC=motor;
+        taskFC=taskList{i};
         restFC=rest;
         %select good days
         good_task = ~isnan(squeeze(sum(sum(taskFC,2),1)));
@@ -33,7 +45,6 @@ function LO1DAY(sub)
         %exclude, 3, 10 weird
         train=cat(3, taskFC_clean, restFC_clean); 
         results=svm_scripts_beta(train, [ones(size(taskFC_clean,3),1); -ones(size(restFC_clean,3),1)],0,0,0,1); %to arrange in pairs options=1
-        saveName=[strcat('~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/LO1DAY/results_mat/', taskListNames{i}, sub, '.mat')]
+        saveName=[strcat('~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/LO1DAY/timesplit_mat/', taskListNames{i}, sub, '.mat')]
         save(saveName, 'results')
-    end
 end 

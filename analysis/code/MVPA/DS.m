@@ -1,6 +1,6 @@
 function DS(task)
-    trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC08','MSC09','MSC10'};
-    predictList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC08','MSC09','MSC10'};
+    trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
+    predictList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
     for i=1:length(trainList)
         taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
         tFC=load(taskFC);
@@ -31,8 +31,8 @@ function DS(task)
                 test_restFC_clean= tr(:,:, test_only_good);
                 test=cat(3, test_taskFC_clean, test_restFC_clean);
                 %different subject same task
-                results=svm_scripts_beta(train, [ones(size(taskFC_clean,3),1); -ones(size(restFC_clean,3),1)],0,test,[ones(size(test_taskFC_clean,3),1); -ones(size(test_restFC_clean,3),1)],1) %to arrange in pairs options=1
-                saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/train_' trainList{i} '_test_' predictList{j} task '.mat'];
+                results=svm_scripts_beta(train, [ones(size(taskFC_clean,3),1); -ones(size(restFC_clean,3),1)],0,test,[ones(size(test_taskFC_clean,3),1); -ones(size(test_restFC_clean,3),1)],0) %to arrange in pairs options=1
+                saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/train_' trainList{i} '_test_' predictList{j} task '.mat'];
                 save(saveName, 'results')
             end 
         end
