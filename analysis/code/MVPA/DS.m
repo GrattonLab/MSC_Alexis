@@ -1,5 +1,26 @@
 function DS(task)
     trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
+    predictList = trainList;
+    
+    % load the data
+    for i = 1:length(trainList)
+        taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
+        tFC=load(taskFC);
+        t.(trainList{i})=tFC.parcel_corrmat;
+        restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' trainList{i} '_parcel_corrmat.mat'];
+        rFC=load(restFC);
+        r.(trainList{i})=rFC.parcel_corrmat;
+    end
+    
+    % train and test
+    for i = 1:length(trainlist)
+        trainsub = trainlist{i};
+        testsubs = setdiff(set(trainList),set(testsub)); %check google for set that can operate on cells/strings
+        
+        for j = 1:length(testsubs)
+            %svmscripts command
+        
+    
     predictList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
     for i=1:length(trainList)
         taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
