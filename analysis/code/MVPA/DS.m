@@ -2,26 +2,38 @@ function DS(task)
     trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
     predictList = trainList;
     
-    % load the data
+    % load the data into a struct containing all subjest task and rest
     for i = 1:length(trainList)
         taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
         tFC=load(taskFC);
-        t.(trainList{i})=tFC.parcel_corrmat;
+        t=tFC.parcel_corrmat;
         restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' trainList{i} '_parcel_corrmat.mat'];
         rFC=load(restFC);
         r.(trainList{i})=rFC.parcel_corrmat;
+        r=rFC.parcel_corrmat;
+        
+        good_task = ~isnan(squeeze(sum(sum(t,2),1)));
+        good_rest = ~isnan(squeeze(sum(sum(r,2),1)));
+        only_good = logical(good_task .* good_rest);
+        taskFC_clean = t(:,:,only_good);
+        restFC_clean= r(:,:, only_good);
+        train=cat(3, taskFC_clean, restFC_clean);
+
+        t.(trainList{i})=tFC.parcel_corrmat;
+
     end
     
     % train and test
-    for i = 1:length(trainlist)
-        trainsub = trainlist{i};
-        testsubs = setdiff(set(trainList),set(testsub)); %check google for set that can operate on cells/strings
-        
+    for i = 1:length(trainList)
+        trainsub = trainList{i};
+        testsubs = setdiff((trainList),(testsub)); %initialize string of variables to pull from struct
         for j = 1:length(testsubs)
+            
             %svmscripts command
-        
+        end 
+    end 
     
-    predictList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
+    
     for i=1:length(trainList)
         taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
         tFC=load(taskFC);
