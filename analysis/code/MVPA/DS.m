@@ -6,28 +6,27 @@ function DS(task)
     for i = 1:length(trainList)
         taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
         tFC=load(taskFC);
-        t=tFC.parcel_corrmat;
+        %t=tFC.parcel_corrmat;
+        t.(trainList{i})=tFC.parcel_corrmat;
         restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' trainList{i} '_parcel_corrmat.mat'];
         rFC=load(restFC);
         r.(trainList{i})=rFC.parcel_corrmat;
-        r=rFC.parcel_corrmat;
-        
-        good_task = ~isnan(squeeze(sum(sum(t,2),1)));
-        good_rest = ~isnan(squeeze(sum(sum(r,2),1)));
-        only_good = logical(good_task .* good_rest);
-        taskFC_clean = t(:,:,only_good);
-        restFC_clean= r(:,:, only_good);
-        train=cat(3, taskFC_clean, restFC_clean);
-
-        t.(trainList{i})=tFC.parcel_corrmat;
-
+        %r=rFC.parcel_corrmat;
     end
     
     % train and test
     for i = 1:length(trainList)
         trainsub = trainList{i};
-        testsubs = setdiff((trainList),(testsub)); %initialize string of variables to pull from struct
+        testsubs = setdiff((trainList),(trainsub)); %initialize string of variables to pull from struct
         for j = 1:length(testsubs)
+            task=t.(trainsub);
+            rest=r.(trainsub);
+            good_task = ~isnan(squeeze(sum(sum(task,2),1)));
+            good_rest = ~isnan(squeeze(sum(sum(rest,2),1)));
+            only_good = logical(good_task .* good_rest);
+            taskFC_clean = task(:,:,only_good);
+            restFC_clean= rest(:,:, only_good);
+            FC=cat(3, taskFC_clean, restFC_clean);
             
             %svmscripts command
         end 
@@ -46,7 +45,7 @@ function DS(task)
         only_good = logical(good_task .* good_rest);
         taskFC_clean = t(:,:,only_good);
         restFC_clean= r(:,:, only_good);
-        train=cat(3, taskFC_clean, restFC_clean);
+        subFC=cat(3, taskFC_clean, restFC_clean);
         for j=1:length(predictList)
             if i==j
                 continue
@@ -64,7 +63,7 @@ function DS(task)
                 test_restFC_clean= tr(:,:, test_only_good);
                 test=cat(3, test_taskFC_clean, test_restFC_clean);
                 %different subject same task
-                results=svm_scripts_beta(train, [ones(size(taskFC_clean,3),1); -ones(size(restFC_clean,3),1)],0,test,[ones(size(test_taskFC_clean,3),1); -ones(size(test_restFC_clean,3),1)],0) %to arrange in pairs options=1
+                results=svm_scripts_beta(subFC, [ones(size(taskFC_clean,3),1); -ones(size(restFC_clean,3),1)],0,test,[ones(size(test_taskFC_clean,3),1); -ones(size(test_restFC_clean,3),1)],0) %to arrange in pairs options=1
                 saveName=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/train_' trainList{i} '_test_' predictList{j} task '.mat'];
                 save(saveName, 'results')
             end 
