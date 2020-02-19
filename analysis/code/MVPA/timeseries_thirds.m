@@ -28,7 +28,7 @@ function timeseries_thirds(sub)
     for i=1:nsamples
         masked_time = memFC.parcel_time{i}(logical(memTmask.TIndFin(i).AllMem),:);
 %cut time in half
-        timeSlice=round(size(masked_time,1)/2);
+        timeSlice=round(size(masked_time,1)/3);
         time1=masked_time(1:timeSlice, :);
         time2=masked_time(timeSlice:end, :);
         t1=corr(time1);
