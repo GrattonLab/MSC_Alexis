@@ -1,10 +1,11 @@
 function acc_pairDay(sub)
-    trainList={'mem','mixed','motor'}
+    %trainList={'mem','mixed','motor'}
+    trainList={'mem','glass','sem','motor'}
     %create empty cell to store
-    C=cell(1,3)
-    for i=1:3
+    C=cell(1,4)
+    for i=1:length(trainList)
         %open results file
-        results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/LO1DAY/results_mat/' trainList{i} sub '.mat']
+        results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/LO1DAY/timesplit_mat/' trainList{i} sub '.mat']
         load(results)
         %calculate the accuracy 
         acc=results.hitRate

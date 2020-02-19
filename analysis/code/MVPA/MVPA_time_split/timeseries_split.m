@@ -78,7 +78,7 @@ function timeseries_split(sub)
         Gt2=corr(Gtime2);
         zGt2=atanh(Gt2);
         Gt=cat(3, zGt1, zGt2);
-        glassFC_all=cat(3, glassFC_all, t);
+        glassFC_all=cat(3, glassFC_all, Gt);
     end
     saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/corrmats_timesplit/', sub, '_AllGlass_parcel_corrmat.mat')]
     save(saveName, 'glassFC_all')
