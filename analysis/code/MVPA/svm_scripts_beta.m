@@ -444,7 +444,7 @@ switch a_type
                     testsTST = test(a,testsData);
                     
                     % Get feature weights
-                    featureWeights(1:numFeatures(f),i,f) = get_w(a);
+                    featureWeights(1:numFeatures(f),1,f) = get_w(a);
                     
                     %predictedLabels(t,f) = testsTST.X;
                     if testsTST.X == testLabels(t)

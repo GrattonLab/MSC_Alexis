@@ -3,18 +3,19 @@ function DS(task)
     trainList={'MSC01','MSC02','MSC04','MSC05'}; %timesplit data
     % load the data into a struct containing all subjest task and rest
     for i = 1:length(trainList)
-        taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/corrmats_timesplit/' trainList{i} '_parcel_corrmat.mat'];
+        %taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/corrmats_timesplit/' trainList{i} '_parcel_corrmat.mat'];
+        taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/' trainList{i} '_parcel_corrmat.mat'];
         tFC=load(taskFC);
         %t=tFC.parcel_corrmat;
-        %t.(trainList{i})=tFC.parcel_corrmat;
+        t.(trainList{i})=tFC.parcel_corrmat;
         %t.(trainList{i})=tFC.memFC_all;
         %t.(trainList{i})=tFC.glassFC_all;
         %t.(trainList{i})=tFC.semFC_all;
-        t.(trainList{i})=tFC.motorFC_all;
-        restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/corrmats_timesplit/' trainList{i} '_parcel_corrmat.mat'];
+        %t.(trainList{i})=tFC.motorFC_all;
+        restFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' trainList{i} '_parcel_corrmat.mat'];
         rFC=load(restFC);
-        %r.(trainList{i})=rFC.parcel_corrmat;
-        r.(trainList{i})=rFC.restFC_all;
+        r.(trainList{i})=rFC.parcel_corrmat;
+        %r.(trainList{i})=rFC.restFC_all;
         %r=rFC.parcel_corrmat;
     end
     
