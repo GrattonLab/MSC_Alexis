@@ -1,10 +1,10 @@
 function DS(task)
-    %trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
-    trainList={'MSC01','MSC02','MSC04','MSC05'}; %timesplit data
+    trainList={'MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
+    %trainList={'MSC01','MSC02','MSC04','MSC05'}; %timesplit data
     % load the data into a struct containing all subjest task and rest
     for i = 1:length(trainList)
         %taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/corrmats_timesplit/' trainList{i} '_parcel_corrmat.mat'];
-        taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/' trainList{i} '_parcel_corrmat.mat'];
+        taskFC=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' trainList{i} '_parcel_corrmat.mat'];
         tFC=load(taskFC);
         %t=tFC.parcel_corrmat;
         t.(trainList{i})=tFC.parcel_corrmat;
