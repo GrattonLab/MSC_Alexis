@@ -19,7 +19,7 @@ function acc_betweenScore(task)
             else
             %open results file
                 %results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/' trainList{i} '_test_' predictList{j} '_all.mat'];
-                results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/timeQuality_rest/train_' trainList{i} '_test_' predictList{j} 'AllSemantic.mat'];
+                results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/timeQuality_rest/mixedsplit_train_' trainList{i} '_test_' predictList{j} 'AllGlass.mat'];
                 load(results);
             %calculate the accuracy
                 %clean_days{j,i}=size(results.predictedTestLabels,1);
@@ -46,19 +46,19 @@ function acc_betweenScore(task)
 t_tab=cell2table(T);
 t_tab.Properties.VariableNames=trainList;
 t_tab.Properties.RowNames=predictList;
-tname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_timeQuality_rest/AllSem' task 'Only_all_acc.csv']
+tname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_onlyGood/AllGlass' task 'Only_all_acc.csv']
 writetable(t_tab, tname, 'WriteRowNames', true)
 
 r_tab=cell2table(R);
 r_tab.Properties.VariableNames=trainList;
 r_tab.Properties.RowNames=predictList;
-rname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_timeQuality_rest/AllSem' task '_restOnly_all_acc.csv']
+rname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_onlyGood/AllGlass' task '_restOnly_all_acc.csv']
 writetable(r_tab, rname, 'WriteRowNames', true)
 
 T=cell2table(C)
 T.Properties.VariableNames=trainList
 T.Properties.RowNames=predictList
-sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_timeQuality_rest/AllSem' task '_acc.csv']
+sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_onlyGood/AllGlass' task '_acc.csv']
 writetable(T, sname, 'WriteRowNames', true)
 
 
