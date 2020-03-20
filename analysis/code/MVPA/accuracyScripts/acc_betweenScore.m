@@ -1,15 +1,15 @@
-function acc_betweenScore()
+function acc_betweenScore(task)
     %trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07'};
     %predictList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07'};
-    trainList={'MSC01','MSC02','MSC04','MSC05'};
-    predictList={'MSC01','MSC02','MSC04','MSC05'};
+    trainList={'MSC02','MSC04','MSC05'};
+    predictList={'MSC02','MSC04','MSC05'};
     %C=cell(7,7);
     %T=cell(7,7);
     %R=cell(7,7);
-    C=cell(4,4);
+    C=cell(3,3);
     %clean_days=cell(8,8);
-    T=cell(4,4);
-    R=cell(4,4);
+    T=cell(3,3);
+    R=cell(3,3);
     for i=1:length(trainList)
         for j=1:length(predictList)
             if i==j
@@ -18,8 +18,8 @@ function acc_betweenScore()
                 R{j,i}=0;
             else
             %open results file
-                results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/' trainList{i} '_test_' predictList{j} '_all.mat'];
-                %results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/timesplit_train_' trainList{i} '_test_' predictList{j} task '.mat'];
+                %results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/' trainList{i} '_test_' predictList{j} '_all.mat'];
+                results=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/results_mat/only_good/timeQuality_rest/train_' trainList{i} '_test_' predictList{j} 'AllSemantic.mat'];
                 load(results);
             %calculate the accuracy
                 %clean_days{j,i}=size(results.predictedTestLabels,1);
@@ -46,19 +46,19 @@ function acc_betweenScore()
 t_tab=cell2table(T);
 t_tab.Properties.VariableNames=trainList;
 t_tab.Properties.RowNames=predictList;
-tname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/matchedRest_onlyGood_taskOnly_all_acc.csv']
+tname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_timeQuality_rest/AllSem' task 'Only_all_acc.csv']
 writetable(t_tab, tname, 'WriteRowNames', true)
 
 r_tab=cell2table(R);
 r_tab.Properties.VariableNames=trainList;
 r_tab.Properties.RowNames=predictList;
-rname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/matchedRest_onlyGood_restOnly_all_acc.csv']
+rname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_timeQuality_rest/AllSem' task '_restOnly_all_acc.csv']
 writetable(r_tab, rname, 'WriteRowNames', true)
 
 T=cell2table(C)
 T.Properties.VariableNames=trainList
 T.Properties.RowNames=predictList
-sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/matchedRest_onlyGood_all_acc.csv']
+sname=['~/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test/acc_timeQuality_rest/AllSem' task '_acc.csv']
 writetable(T, sname, 'WriteRowNames', true)
 
 

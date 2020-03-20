@@ -23,20 +23,22 @@ function timeseries_split(sub)
     restFC=load(restFile);
 %after this masked time split up into pieces then run as corr
 %loop through all days
-    memFC_all=[]
+    parel_corrmat=[]
     nsamples = size(memFC.parcel_time, 2);
     for i=1:nsamples
         masked_time = memFC.parcel_time{i}(logical(memTmask.TIndFin(i).AllMem),:);
+        p=corr(masked_time);
+        zp=atanh(p);
 %cut time in half
-        timeSlice=round(size(masked_time,1)/2);
-        time1=masked_time(1:timeSlice, :);
-        time2=masked_time(timeSlice:end, :);
-        t1=corr(time1);
-        zt1=atanh(t1);
-        t2=corr(time2);
-        zt2=atanh(t2);
-        t=cat(3, zt1, zt2);
-        memFC_all=cat(3, memFC_all, t);
+        %timeSlice=round(size(masked_time,1)/2);
+        %time1=masked_time(1:timeSlice, :);
+        %time2=masked_time(timeSlice:end, :);
+        %t1=corr(time1);
+        %zt1=atanh(t1);
+        %t2=corr(time2);
+        %zt2=atanh(t2);
+        %t=cat(3, zt1, zt2);
+        parel_corrmat=cat(3, parel_corrmat, zp);
     end
     saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/corrmats_timesplit/', sub, '_parcel_corrmat.mat')]
     save(saveName, 'memFC_all')
