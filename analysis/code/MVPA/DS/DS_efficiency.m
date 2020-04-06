@@ -1,5 +1,5 @@
 function DS_efficiency(task,  saveFolder, restdir, timesplit)
-    trainList={'MSC02','MSC04','MSC05'};
+    trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
     % load the data into a struct containing all subjest task and rest
     for i = 1:length(trainList)
         filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data';

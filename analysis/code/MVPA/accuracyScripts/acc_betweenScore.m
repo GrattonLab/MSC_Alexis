@@ -1,4 +1,4 @@
-function acc_betweenScore(task)
+function acc_betweenScore(task, sublist)
     %trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07'};
     %predictList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07'};
     trainList={'MSC02','MSC04','MSC05'};
