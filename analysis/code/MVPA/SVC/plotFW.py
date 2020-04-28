@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 #Imports
@@ -18,11 +18,11 @@ def feature_plots(coef, f='DS', task='task', sub='i'):
     #get atlas you want to use
     Parcel_params = loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
     #make pretty fig
-    vmin=np.amin(ds)
-    vmax=np.amax(ds)
-    fig = figure_corrmat(ds,Parcel_params, clims=(vmin,vmax))
+    #vmin=np.amin(ds)
+    #vmax=np.amax(ds)
+    fig = figure_corrmat(ds,Parcel_params, clims=(-.002,.002))
     fig.savefig("/Users/Alexis/Desktop/MSC_Alexis/analysis/output/images/SVC/fw/" +f+ "/" +task+ "_" +sub+ ".png", bbox_inches='tight')
-    
+
 def loadParcelParams(roiset,datadir):
     """ This function loads information about the ROIs and networks.
     For now, this is only set up to work with 333 Gordon 2014 Cerebral Cortex regions
@@ -43,7 +43,7 @@ def loadParcelParams(roiset,datadir):
           dataIn = spio.loadmat(datadir + roiset + '_' + dI + '.mat')
           Parcel_params[dI] = np.array(dataIn[dI])
     Parcel_params['roi_sort'] = Parcel_params['roi_sort'] - 1 #orig indexing in matlab, need to subtract 1
-    
+
     #transition points and centers for plotting
     transitions,centers = compute_trans_centers(Parcel_params['mods_array'],Parcel_params['roi_sort'])
     Parcel_params['transitions'] = transitions
@@ -79,7 +79,7 @@ def compute_trans_centers(mods_array,roi_sort):
     return transitions,centers
 
 def figure_corrmat(corrmat,Parcel_params, clims=(-1,1)):
-    """ This function will make a nice looking plot of a correlation matrix for a given parcellation, 
+    """ This function will make a nice looking plot of a correlation matrix for a given parcellation,
     labeling and demarkating networks.
     Inputs:
     corrmat: an roi X roi matrix for plotting
@@ -160,7 +160,7 @@ def fwFolds(folds, f, task, sub):
     #make pretty fig
     vmin=np.amin(ds)
     vmax=np.amax(ds)
-    fig = figure_corrmat(ds,Parcel_params, clims=(vmin, vmax))
+    fig = figure_corrmat(ds,Parcel_params, clims=(0, .0002))
     fig.savefig("/Users/Alexis/Desktop/MSC_Alexis/analysis/output/images/SVC/fw/" +f+ "/fwSD_Folds/" +task+ "_" +sub+ ".png", bbox_inches='tight')
 
 
@@ -199,7 +199,3 @@ saveFW(coef,'DS', 'test','foo')
 
 
 # In[ ]:
-
-
-
-

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
+# In[1]:
 
 
 #Imports
@@ -16,13 +16,13 @@ def feature_plots(coef, f='DS', task='task', sub='i'):
     ds[np.triu_indices(ds.shape[0], k = 1)] = coef
     ds = ds + ds.T
     #get atlas you want to use
-    Parcel_params = loadParcelParams('Gordon333','/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
+    Parcel_params = loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
     #make pretty fig
     vmin=np.amin(ds)
     vmax=np.amax(ds)
-    fig = figure_corrmat(ds,Parcel_params, clims=(vmin,vmax))
-    fig.savefig("/Users/aporter1350/Desktop/MSC_Alexis/analysis/output/images/logReg/fw/" +f+ "/" +task+ "_" +sub+ ".png", bbox_inches='tight')
-    
+    fig = figure_corrmat(ds,Parcel_params, clims=(-.01,.01))
+    fig.savefig("/Users/Alexis/Desktop/MSC_Alexis/analysis/output/images/logReg/fw/" +f+ "/" +task+ "_" +sub+ ".png", bbox_inches='tight')
+
 def loadParcelParams(roiset,datadir):
     """ This function loads information about the ROIs and networks.
     For now, this is only set up to work with 333 Gordon 2014 Cerebral Cortex regions
@@ -43,7 +43,7 @@ def loadParcelParams(roiset,datadir):
           dataIn = spio.loadmat(datadir + roiset + '_' + dI + '.mat')
           Parcel_params[dI] = np.array(dataIn[dI])
     Parcel_params['roi_sort'] = Parcel_params['roi_sort'] - 1 #orig indexing in matlab, need to subtract 1
-    
+
     #transition points and centers for plotting
     transitions,centers = compute_trans_centers(Parcel_params['mods_array'],Parcel_params['roi_sort'])
     Parcel_params['transitions'] = transitions
@@ -79,7 +79,7 @@ def compute_trans_centers(mods_array,roi_sort):
     return transitions,centers
 
 def figure_corrmat(corrmat,Parcel_params, clims=(-1,1)):
-    """ This function will make a nice looking plot of a correlation matrix for a given parcellation, 
+    """ This function will make a nice looking plot of a correlation matrix for a given parcellation,
     labeling and demarkating networks.
     Inputs:
     corrmat: an roi X roi matrix for plotting
@@ -119,7 +119,7 @@ def saveFW(coef, f, task, sub):
     ds=np.zeros((nrois, nrois))
     ds[np.triu_indices(ds.shape[0], k = 1)] = coef
     ds = ds + ds.T
-    Parcel_params = loadParcelParams('Gordon333','/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
+    Parcel_params = loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
     roi_sort = np.squeeze(Parcel_params['roi_sort'])
     #rearrange roi's to be together
     corrmat=ds[roi_sort,:][:,roi_sort]
@@ -138,10 +138,33 @@ def saveFW(coef, f, task, sub):
             else:
                 position=position+1
     df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
-    df.to_csv("/Users/aporter1350/Desktop/MSC_Alexis/analysis/output/results/logReg/fw/" +f+ "/" +task+ "_" +sub+ ".csv")
+    df.to_csv("/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/logReg/fw/" +f+ "/" +task+ "_" +sub+ ".csv")
+
 
     #you'll have to specify that it is a tuple pd.read_csv('test.csv',index_col=[0,1])
 
+
+#standard deviation of feature weights between folds
+def fwFolds(folds, f, task, sub):
+    #concate into useable form
+    fw=np.empty([10,55278])
+    count=0
+    for model in folds['estimator']:
+        i=model.coef_
+        fw[count]=i
+        count=count+1
+    fwSD=np.std(fw, axis=0)
+    nrois=333
+    ds=np.zeros((nrois, nrois))
+    ds[np.triu_indices(ds.shape[0], k = 1)] = fwSD
+    ds = ds + ds.T
+    #get atlas you want to use
+    Parcel_params = loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
+    #make pretty fig
+    vmin=np.amin(ds)
+    vmax=np.amax(ds)
+    fig = figure_corrmat(ds,Parcel_params, clims=(0, .001))
+    fig.savefig("/Users/Alexis/Desktop/MSC_Alexis/analysis/output/images/logReg/fw/" +f+ "/fwSD_Folds/" +task+ "_" +sub+ ".png", bbox_inches='tight')
 
 
 
@@ -165,7 +188,3 @@ def saveFW(coef, f, task, sub):
 
 
 # In[ ]:
-
-
-
-
