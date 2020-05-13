@@ -57,8 +57,6 @@ def run_prediction(classifier, analysis, FW=False, CVscores=False, plotACC=False
         classifyBS(classifier, analysis, FW, plotACC, statsACC)
     else:
         print('Error: You didnt specify what analysis')
-
-
 def classifyDS(classifier, analysis, FW, plotACC, statsACC):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(DSvars, columns=['sub','task'])
@@ -78,10 +76,7 @@ def classifyDS(classifier, analysis, FW, plotACC, statsACC):
     else:
         print('skipping over making stat tables for accuracy, saving accuracy as csv')
     #save accuracy
-    dfDS.to_csv(outdir+'results/'+classifier+'/acc/DS/acc.csv')
-    #running this script will output x, y
-    #x_train, y_train=reshape.concateFC(taskFC, restFC)
-#if SS store df of cross validation folds
+    dfDS.to_csv(outDir+'results/'+classifier+'/acc/DS/acc.csv')
 def classifySS(classifier,analysis, FW, plotACC, statsACC):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(SSvars, columns=['sub','task'])
@@ -101,9 +96,7 @@ def classifySS(classifier,analysis, FW, plotACC, statsACC):
     else:
         print('skipping over making stat tables for accuracy, saving accuracy as csv')
     #save accuracy
-    dfSS.to_csv(outdir+'results/'+classifier+'/acc/SS/acc.csv')
-
-
+    dfSS.to_csv(outDir+'results/'+classifier+'/acc/SS/acc.csv')
 def classifyBS(classifier, analysis, FW, plotACC, statsACC):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(BSvars, columns=['sub','task'])
@@ -123,9 +116,7 @@ def classifyBS(classifier, analysis, FW, plotACC, statsACC):
     else:
         print('skipping over making stat tables for accuracy, saving accuracy as csv')
     #save accuracy
-    dfBS.to_csv(outdir+'results/'+classifier+'/acc/BS/acc.csv')
-    #running this script will output x, y
-    #x_train, y_train=reshape.concateFC(taskFC, restFC)
+    dfBS.to_csv(outDir+'results/'+classifier+'/acc/BS/acc.csv')
 def model(classifier, analysis,FW, train_sub, test_sub, train_task, test_task):
     if classifier=='SVC':
         clf=LinearSVC()
@@ -193,4 +184,5 @@ def classifyCV(classifier):
     avg_CVTable=pd.concat(avg_CV, axis=1)
     #plot as heatmaps
     results.plotACC(avg_CVTable, classifier, 'CV')
+    results.statsACC(avgTable, classifier, 'CV')
     avg_CVTable.to_csv(outDir+'results/'+classifier+'/acc/DS/cvTable_avg.csv')
