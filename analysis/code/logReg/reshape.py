@@ -3,11 +3,10 @@
 
 # In[2]:
 
-
+import scipy.io
+import pandas as pd
+import numpy as np
 def matFiles(df='path'):
-    import scipy.io
-    import pandas as pd
-    import numpy as np
     #Consistent parameters to use for editing datasets
     nrois=333
     nsess=10
@@ -27,7 +26,14 @@ def matFiles(df='path'):
         ds[count]=tmp[mask]
         count=count+1
     return ds
-
+def concateFC(taskFC, restFC):
+    x=np.concatenate((taskFC, restFC))
+    taskSize=taskFC.shape[0]
+    restSize=restFC.shape[0]
+    t = np.ones(taskSize, dtype = int)
+    r=np.zeros(restSize, dtype=int)
+    y = np.concatenate((t,r))
+    return x, y
 
 # In[ ]:
 
@@ -36,7 +42,3 @@ def matFiles(df='path'):
 
 
 # In[ ]:
-
-
-
-
