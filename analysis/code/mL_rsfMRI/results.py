@@ -119,6 +119,9 @@ def boxACC(df, classifier, analysis):
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
         ax.legend(title='Train Task',loc='upper right')
+        fig=ax.get_figure()
+        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
+
     elif analysis=='DS':
         print('diff sub')
     elif analysis=='BS':
@@ -132,5 +135,6 @@ def boxACC(df, classifier, analysis):
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
         ax.legend(title='Train Task',loc='upper right')
+        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
     else:
         print('not enough information')

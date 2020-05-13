@@ -151,7 +151,7 @@ def model(classifier, analysis,FW, train_sub, test_sub, train_task, test_task):
     ACCscores=clf.score(x_test,y_test)
     return ACCscores
 #Calculate acc of cross validation within sub within task
-def classifyCV(classifier):
+def classifyCV(classifier, analysis):
     avg_CV=[]
     if classifier=='SVC':
         clf=LinearSVC()
@@ -179,10 +179,10 @@ def classifyCV(classifier):
         avg_CV.append(tmp_df)
         cvTable=pd.concat(cvTable, axis=1)
     #saving cv per folds if debugging
-        cvTable.to_csv(outDir+'results/'+classifier+'/acc/DS/'+sub+'_cvTable_folds.csv')
+        cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/cvTable_folds.csv')
     #average acc per sub per tasks
     avg_CVTable=pd.concat(avg_CV, axis=1)
     #plot as heatmaps
     results.plotACC(avg_CVTable, classifier, 'CV')
     results.statsACC(avgTable, classifier, 'CV')
-    avg_CVTable.to_csv(outDir+'results/'+classifier+'/acc/DS/cvTable_avg.csv')
+    avg_CVTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
