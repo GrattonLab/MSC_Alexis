@@ -18,7 +18,7 @@ subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 def plotACC(df, classifier, analysis):
     if analysis == 'CV':
         print('task by subject')
-        ax=sns.heatmap(df, annot=True, vmin=.5, vmax=1)
+        ax=sns.heatmap(df, annot=True, vmix=.5, vmax=1)
         fig=ax.get_figure()
         fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/acc_heatmap.png', bbox_inches='tight')
     elif analysis=='SS':
@@ -75,62 +75,11 @@ def plotACC(df, classifier, analysis):
 def statsACC(df, classifier, analysis):
     if analysis=='CV':
         print('cross validation')
-        mu=df.mean()
-        sd=df.std()
-        stats=pd.DataFrame({'Mean':mu, 'Std':sd})
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='SS':
         print('same sub')
-        df.drop(['sub'], axis=1, inplace=True)
-        stats=df.groupby(['test_task', 'train_task']).mean()
-        stats.rename(columns={'acc':'Mean'}, inplace=True)
-        sd=df.groupby(['test_task', 'train_task']).std()
-        stats['Std']=sd['acc']
-        stats.reset_index(inplace=True)
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
-    elif analysis=='DS':
-        print('diff sub')
-        df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        stats=df.groupby('task').mean()
-        stats.rename(columns={'acc':'Mean'}, inplace=True)
-        sd=df.groupby('task').std()
-        stats['Std']=sd['acc']
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
-    elif analysis=='BS':
-        print('diff sub diff task')
-        df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        stats=df.groupby(['test_task', 'train_task']).mean()
-        stats.rename(columns={'acc':'Mean'}, inplace=True)
-        sd=df.groupby(['test_task', 'train_task']).std()
-        stats['Std']=sd['acc']
-        stats.reset_index(inplace=True)
-    else:
-        print('not enough information')
-def boxACC(df, classifier, analysis):
-    if analysis=='CV':
-        print('cross validation')
-    elif analysis=='SS':
-        print('same sub')
-        df.drop(['sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
-        ax.axhline(.50, ls='--', color='r')
-        ax.set_title('Same Sub Between Task')
-        ax.set_xlabel('Test Task')
-        ax.set_ylabel('Accuracy')
-        ax.legend(title='Train Task',loc='upper right')
     elif analysis=='DS':
         print('diff sub')
     elif analysis=='BS':
         print('diff sub diff task')
-        df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
-        ax.axhline(.50, ls='--', color='r')
-        ax.set(ylim=(.4))
-        ax.set_title('Between Sub Between Task')
-        ax.set_xlabel('Test Task')
-        ax.set_ylabel('Accuracy')
-        ax.legend(title='Train Task',loc='upper right')
     else:
         print('not enough information')
