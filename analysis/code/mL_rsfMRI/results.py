@@ -109,6 +109,15 @@ def statsACC(df, classifier, analysis):
 def boxACC(df, classifier, analysis):
     if analysis=='CV':
         print('cross validation')
+        df = pd.melt(df, id_vars=['sub'], value_vars=['mixed','motor','mem'], var_name='task', value_name='acc')
+        df.drop('sub', axis=1, inplace=True)
+        plt.figure(figsize=(15,8))
+        ax=sns.boxplot(x='task', y='acc', data=df)
+        ax.set_title('Cross Validation')
+        ax.set_xlabel('Test Task')
+        ax.set_ylabel('Accuracy')
+        fig=ax.get_figure()
+        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
     elif analysis=='SS':
         print('same sub')
         df.drop(['sub'], axis=1, inplace=True)
@@ -121,9 +130,17 @@ def boxACC(df, classifier, analysis):
         ax.legend(title='Train Task',loc='upper right')
         fig=ax.get_figure()
         fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
-
     elif analysis=='DS':
         print('diff sub')
+        df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
+        plt.figure(figsize=(15,8))
+        ax=sns.boxplot(x='task', y='acc', data=df)
+        ax.axhline(.50, ls='--', color='r')
+        ax.set_title('Different Sub Same Task')
+        ax.set_xlabel('Test Task')
+        ax.set_ylabel('Accuracy')
+        fig=ax.get_figure()
+        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
     elif analysis=='BS':
         print('diff sub diff task')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
