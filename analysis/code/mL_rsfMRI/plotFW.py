@@ -8,12 +8,12 @@
 import numpy as np
 import scipy.io as spio
 import matplotlib.pyplot as plt
-import pandas as pdimport sys
+import pandas as pd
 import os
 import sys
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/'
+outDir = thisDir + 'output/mL/'
 def feature_plots(coef, classifier='which', analysis='type', train_task='task', train_sub='i'):
     #convert to 2d symmetrical matrix
     nrois=333
