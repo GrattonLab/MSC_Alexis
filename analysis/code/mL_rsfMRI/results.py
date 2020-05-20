@@ -30,21 +30,23 @@ def boxACC(df, classifier, analysis):
     elif analysis=='SS':
         print('same sub boxplots')
         #df.drop(['sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
+        plt.figure(figsize=(8,6))
+        sns.set_context("talk")
         ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
         ax.axhline(.50, ls='--', color='r')
-        ax.set_title('Same Sub Between Task')
+        ax.set_title(classifier)
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
-        ax.legend(title='Train Task',loc='upper right')
+        ax.legend(title='Train Task',loc='lower left')
         #fig=ax.get_figure()
         plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
     elif analysis=='DS':
         #df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
+        plt.figure(figsize=(8,6))
+        sns.set_context("talk")
         ax=sns.boxplot(x='task', y='acc', data=df)
         ax.axhline(.50, ls='--', color='r')
-        ax.set_title('Different Sub Same Task')
+        ax.set_title(classifier)
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
         #fig=ax.get_figure()
@@ -52,11 +54,12 @@ def boxACC(df, classifier, analysis):
     elif analysis=='BS':
         print('diff sub diff task boxplots')
         #df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
+        plt.figure(figsize=(8,6))
+        sns.set_context("talk")
         ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
         ax.axhline(.50, ls='--', color='r')
         ax.set(ylim=(.4))
-        ax.set_title('Between Sub Between Task')
+        ax.set_title(classifier)
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
         ax.legend(title='Train Task',loc='upper right')
@@ -155,3 +158,95 @@ def statsACC(df, classifier, analysis):
         stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     else:
         print('skipping stats')
+
+def cv_modelComp():
+    SVC=pd.read_csv(outDir+'results/SVC/acc/CV/acc.csv')
+    log=pd.read_csv(outDir+'results/logReg/acc/CV/acc.csv')
+    ridge=pd.read_csv(outDir+'results/Ridge/acc/CV/acc.csv')
+    SVC.drop(columns='sub', inplace=True)
+    SVC_un=SVC.melt(value_vars=['mixed', 'motor','mem'], var_name='Task', value_name='Accuracy')
+    SVC_un['Analysis']='SVC'
+
+    log.drop(columns='sub', inplace=True)
+    log_un=log.melt(value_vars=['mixed', 'motor','mem'],var_name='Task', value_name='Accuracy')
+    log_un['Analysis']='logReg'
+
+    ridge.drop(columns='sub', inplace=True)
+    ridge_un=ridge.melt(value_vars=['mixed', 'motor','mem'],var_name='Task', value_name='Accuracy')
+    ridge_un['Analysis']='Ridge'
+    classifiers=[SVC_un, log_un, ridge_un]
+    result = pd.concat(classifiers)
+    ticks=[.9, .92, .94, .96, .98, 1]
+    sns.set_context("talk")
+    plt.figure(figsize=(15,8))
+    ax=sns.barplot('Analysis', 'Accuracy', hue='Task', data=result)
+    ax.set(ylim=(.9, 1.03))
+    ax.set_yticklabels(ticks)
+    ax.set_title('Cross Validation Across Models')
+    ax.legend(loc='upper right')
+    plt.savefig(outDir +'presentation/cv_barplot.png', bbox_inches='tight')
+
+def ds_boxplot():
+    SVC=pd.read_csv(outDir+'results/SVC/acc/DS/acc.csv')
+    SVC['Analysis']='SVC'
+    log=pd.read_csv(outDir+'results/logReg/acc/DS/acc.csv')
+    log['Analysis']='logReg'
+    ridge=pd.read_csv(outDir+'results/Ridge/acc/DS/acc.csv')
+    ridge['Analysis']='Ridge'
+    classifiers=[SVC, log, ridge]
+    result = pd.concat(classifiers)
+
+    plt.figure(figsize=(15,8))
+    sns.set_context("talk")
+    ax=sns.boxplot('Analysis', 'acc', hue='task', data=result)
+    ax.set(ylim=(.3, 1.03))
+    ax.axhline(.50, ls='--', color='r')
+    ax.set_title('Different Subject Same Task Across Models')
+    ax.legend(title='Task',loc='lower left')
+    ax.set_ylabel('Accuracy')
+    plt.savefig(outDir +'presentation/ds_boxplot.png', bbox_inches='tight')
+
+def ss_boxplot():
+    SVC=pd.read_csv(outDir+'results/SVC/acc/SS/acc.csv')
+    SVC['Analysis']='SVC'
+    log=pd.read_csv(outDir+'results/logReg/acc/SS/acc.csv')
+    log['Analysis']='logReg'
+    ridge=pd.read_csv(outDir+'results/Ridge/acc/SS/acc.csv')
+    ridge['Analysis']='Ridge'
+    classifiers=[SVC, log, ridge]
+    result = pd.concat(classifiers)
+    result['Train.Test']=result['train_task']+'.'+result['test_task']
+    sns.set_context("talk")
+    plt.figure(figsize=(28,8))
+    colors = ["#0000CC", "#69A7EF","#FD8A07","#FCCF8C","#21B056","#84E5A8"]
+    # Set color palette
+    sns.set_palette(sns.color_palette(colors))
+    ax=sns.boxplot(x="Analysis", y="acc", hue='Train.Test', data=result)
+    ax.axhline(.50, ls='--', color='r')
+    ax.set_ylabel('Accuracy', fontsize=25)
+    ax.set_xlabel('Analysis', fontsize=25)
+    ax.set_title('Same Subject Between Task Across Models', fontsize=30)
+    ax.legend(loc='lower left')
+    plt.savefig(outDir +'presentation/ss_boxplot.png', bbox_inches='tight')
+def bs_boxplot():
+    SVC=pd.read_csv(outDir+'results/SVC/acc/BS/acc.csv')
+    SVC['Analysis']='SVC'
+    log=pd.read_csv(outDir+'results/logReg/acc/BS/acc.csv')
+    log['Analysis']='logReg'
+    ridge=pd.read_csv(outDir+'results/Ridge/acc/BS/acc.csv')
+    ridge['Analysis']='Ridge'
+    classifiers=[SVC, log, ridge]
+    result = pd.concat(classifiers)
+    result['Train.Test']=result['train_task']+'.'+result['test_task']
+    sns.set_context("talk")
+    plt.figure(figsize=(28,14))
+    colors = ["#0000CC", "#69A7EF","#FD8A07","#FCCF8C","#21B056","#84E5A8"]
+    # Set color palette
+    sns.set_palette(sns.color_palette(colors))
+    ax=sns.boxplot(x="Analysis", y="acc", hue='Train.Test', data=result)
+    ax.axhline(.50, ls='--', color='r')
+    ax.set_ylabel('Accuracy', fontsize=25)
+    ax.set_xlabel('Analysis', fontsize=25)
+    ax.set_title('Different Subject Different Task Across Models', fontsize=30)
+    ax.legend(loc='lower left')
+    plt.savefig(outDir +'presentation/bs_boxplot.png', bbox_inches='tight')
