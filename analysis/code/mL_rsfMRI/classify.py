@@ -22,7 +22,7 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/'
+outDir = thisDir + 'output/mL/'
 # Subjects and tasks
 taskList=['mixed', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -42,22 +42,21 @@ and what classifier you would like to use. For now classifier options are svm:li
 regression, and ridge:ridge regression. Analysis is the type of analysis you wanted
 to run. DS--different subject same task; SS--same subject different task;
 BS--different subject different task. Each analysis will concatenate across
-subjects and make a dataframe. If CVscores=True calculate accuracy of folds for subject and task.
-If FW is true will collect all necessary feature weights and plot or save then
+subjects and make a dataframe. If FW is true will collect all necessary feature weights and plot or save then
 into the appropriate format. If plotACC=True will plot the accuracy as heatmaps.
 If statsACC=True will make tables of the mean and sd for each task."""
-def run_prediction(classifier, analysis, FW=False, CVscores=False, plotACC=False, statsACC=False):
-    if CVscores is True:
-        classifyCV(classifier)
+def run_prediction(classifier, analysis, FW=False, stats=False):
+    if analysis=='CV':
+        classifyCV(classifier, analysis, FW, stats)
     elif analysis=='DS':
-        classifyDS(classifier, analysis, FW, plotACC, statsACC)
+        classifyDS(classifier, analysis, FW, stats)
     elif analysis=='SS':
-        classifySS(classifier, analysis, FW, plotACC, statsACC)
+        classifySS(classifier, analysis, FW, stats)
     elif analysis=='BS':
-        classifyBS(classifier, analysis, FW, plotACC, statsACC)
+        classifyBS(classifier, analysis, FW, stats)
     else:
-        print('Error: You didnt specify what analysis')
-def classifyDS(classifier, analysis, FW, plotACC, statsACC):
+        print('did not specify analysis')
+def classifyDS(classifier, analysis, FW, stats):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(DSvars, columns=['sub','task'])
     dfDS=pd.DataFrame()
@@ -67,17 +66,14 @@ def classifyDS(classifier, analysis, FW, plotACC, statsACC):
         score=model(classifier, analysis,FW, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
         acc_scores_per_task.append(score)
     dfDS['acc']=acc_scores_per_task
-    if plotACC is True:
+    if stats is True:
         results.plotACC(dfDS, classifier, analysis)
-    else:
-        print('skipping over heatmaps for accuracy')
-    if statsACC is True:
         results.statsACC(dfDS, classifier, analysis)
+        results.boxACC(dfDS, classifier, analysis)
     else:
-        print('skipping over making stat tables for accuracy, saving accuracy as csv')
-    #save accuracy
-    dfDS.to_csv(outDir+'results/'+classifier+'/acc/DS/acc.csv')
-def classifySS(classifier,analysis, FW, plotACC, statsACC):
+        print('skipping stats')
+    dfDS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+def classifySS(classifier,analysis, FW, stats):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(SSvars, columns=['sub','task'])
     dfSS=pd.DataFrame()
@@ -87,17 +83,15 @@ def classifySS(classifier,analysis, FW, plotACC, statsACC):
         score=model(classifier, analysis,FW, train_sub=row['sub'], test_sub=row['sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfSS['acc']=acc_scores_per_task
-    if plotACC is True:
+    if stats is True:
         results.plotACC(dfSS, classifier, analysis)
-    else:
-        print('skipping over heatmaps for accuracy')
-    if statsACC is True:
         results.statsACC(dfSS, classifier, analysis)
+        results.boxACC(dfSS, classifier, analysis)
     else:
-        print('skipping over making stat tables for accuracy, saving accuracy as csv')
+        print('skipping stats')
     #save accuracy
-    dfSS.to_csv(outDir+'results/'+classifier+'/acc/SS/acc.csv')
-def classifyBS(classifier, analysis, FW, plotACC, statsACC):
+    dfSS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+def classifyBS(classifier, analysis, FW, stats):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(BSvars, columns=['sub','task'])
     dfBS=pd.DataFrame()
@@ -107,16 +101,14 @@ def classifyBS(classifier, analysis, FW, plotACC, statsACC):
         score=model(classifier, analysis,FW, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfBS['acc']=acc_scores_per_task
-    if plotACC is True:
+    if stats is True:
         results.plotACC(dfBS, classifier, analysis)
-    else:
-        print('skipping over heatmaps for accuracy')
-    if statsACC is True:
         results.statsACC(dfBS, classifier, analysis)
+        results.boxACC(dfBS, classifier, analysis)
     else:
-        print('skipping over making stat tables for accuracy, saving accuracy as csv')
+        print('skipping stats')
     #save accuracy
-    dfBS.to_csv(outDir+'results/'+classifier+'/acc/BS/acc.csv')
+    dfBS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
 def model(classifier, analysis,FW, train_sub, test_sub, train_task, test_task):
     if classifier=='SVC':
         clf=LinearSVC()
@@ -145,13 +137,13 @@ def model(classifier, analysis,FW, train_sub, test_sub, train_task, test_task):
         coef=clf.coef_
         plotFW.feature_plots(coef, classifier, analysis, train_task, train_sub)
     else:
-        pass
+        print('skipping feature weights')
     predict=clf.predict(x_test)
     #Get accuracy of model
     ACCscores=clf.score(x_test,y_test)
     return ACCscores
 #Calculate acc of cross validation within sub within task
-def classifyCV(classifier, analysis):
+def classifyCV(classifier, analysis, FW, stats):
     avg_CV=[]
     if classifier=='SVC':
         clf=LinearSVC()
@@ -160,7 +152,7 @@ def classifyCV(classifier, analysis):
     elif classifier=='ridge':
         clf=RidgeClassifier()
     else:
-        print('Error: You didnt specify what classifier')
+        print('invalid classifier')
     for task in taskList:
         acc_scores_per_task=[]
         cvTable=[]
@@ -179,10 +171,13 @@ def classifyCV(classifier, analysis):
         avg_CV.append(tmp_df)
         cvTable=pd.concat(cvTable, axis=1)
     #saving cv per folds if debugging
-        cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/cvTable_folds.csv')
+        cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/cvTable_folds.csv', index=False)
     #average acc per sub per tasks
-    avg_CVTable=pd.concat(avg_CV, axis=1)
-    #plot as heatmaps
-    results.plotACC(avg_CVTable, classifier, 'CV')
-    results.statsACC(avgTable, classifier, 'CV')
-    avg_CVTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
+    df=pd.concat(avg_CV, axis=1)
+    if stats is True:
+        results.plotACC(df, classifier, analysis)
+        results.statsACC(df, classifier, analysis)
+        results.boxACC(df, classifier, analysis)
+    else:
+        print('skipping stats')
+    df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')

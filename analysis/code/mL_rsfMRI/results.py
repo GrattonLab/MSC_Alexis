@@ -11,18 +11,68 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/'
+outDir = thisDir + 'output/mL/'
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+def boxACC(df, classifier, analysis):
+    if analysis=='CV':
+        print('cross validation boxplots')
+        df= pd.melt(df, value_vars=['mixed','motor','mem'], var_name='task', value_name='acc')
+        #df.drop('sub', axis=1, inplace=True)
+        plt.figure(figsize=(15,8))
+        ax=sns.boxplot(x='task', y='acc', data=df)
+        ax.set_title('Cross Validation')
+        ax.set_xlabel('Test Task')
+        ax.set_ylabel('Accuracy')
+        #fig=ax.get_figure()
+        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
+    elif analysis=='SS':
+        print('same sub boxplots')
+        #df.drop(['sub'], axis=1, inplace=True)
+        plt.figure(figsize=(15,8))
+        ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
+        ax.axhline(.50, ls='--', color='r')
+        ax.set_title('Same Sub Between Task')
+        ax.set_xlabel('Test Task')
+        ax.set_ylabel('Accuracy')
+        ax.legend(title='Train Task',loc='upper right')
+        #fig=ax.get_figure()
+        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
+    elif analysis=='DS':
+        #df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
+        plt.figure(figsize=(15,8))
+        ax=sns.boxplot(x='task', y='acc', data=df)
+        ax.axhline(.50, ls='--', color='r')
+        ax.set_title('Different Sub Same Task')
+        ax.set_xlabel('Test Task')
+        ax.set_ylabel('Accuracy')
+        #fig=ax.get_figure()
+        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
+    elif analysis=='BS':
+        print('diff sub diff task boxplots')
+        #df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
+        plt.figure(figsize=(15,8))
+        ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
+        ax.axhline(.50, ls='--', color='r')
+        ax.set(ylim=(.4))
+        ax.set_title('Between Sub Between Task')
+        ax.set_xlabel('Test Task')
+        ax.set_ylabel('Accuracy')
+        ax.legend(title='Train Task',loc='upper right')
+        #fig=ax.get_figure()
+        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
+    else:
+        print('skipping boxplots')
 def plotACC(df, classifier, analysis):
     if analysis == 'CV':
-        print('task by subject')
+        print('task by subject heatmap')
+        plt.figure()
         ax=sns.heatmap(df, annot=True, vmin=.5, vmax=1)
-        fig=ax.get_figure()
-        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/acc_heatmap.png', bbox_inches='tight')
+        #fig=ax.get_figure()
+        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/heatmap.png', bbox_inches='tight')
     elif analysis=='SS':
-        print('task by subject')
+        print('task by subject heatmap')
         grouped_df=df.groupby('test_task')
         for task in taskList:
             task_df=grouped_df.get_group(task)
@@ -32,10 +82,10 @@ def plotACC(df, classifier, analysis):
             ax=sns.heatmap(task_df, annot=True, vmin=.5, vmax=1)
             ax.set_title('Testing ' + task)
             ax.set_xlabel('Training Variables')
-            fig=ax.get_figure()
-            fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/'+task+'_acc_heatmap.png', bbox_inches='tight')
+            #fig=ax.get_figure()
+            plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/'+task+'_heatmap.png', bbox_inches='tight')
     elif analysis =='DS':
-        print('subject by subject')
+        print('subject by subject heatmap')
         grouped_df=df.groupby('task')
         for task in taskList:
             task_df=grouped_df.get_group(task)
@@ -46,10 +96,10 @@ def plotACC(df, classifier, analysis):
             ax.set_title('Testing ' + task)
             ax.set_xlabel('Training Variables')
             ax.set_ylabel('Testing Variables')
-            fig=ax.get_figure()
-            fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/'+task+'_acc_heatmap.png', bbox_inches='tight')
+            #fig=ax.get_figure()
+            plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/'+task+'_heatmap.png', bbox_inches='tight')
     elif analysis =='BS':
-        print('subject by subject per train task split')
+        print('subject by subject per train task split heatmap')
         test_group=df.groupby('test_task')
         for test_task in taskList:
             task_df=test_group.get_group(test_task)
@@ -66,21 +116,19 @@ def plotACC(df, classifier, analysis):
                     ax.set_title('Testing ' + test_task+' Training '+train_task)
                     ax.set_xlabel('Training Variables')
                     ax.set_ylabel('Testing Variables')
-                    fig=ax.get_figure()
-                    fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/'+train_task+'_'+test_task+'_acc_heatmap.png', bbox_inches='tight')
-
+                    #fig=ax.get_figure()
+                    plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/train_'+train_task+'_test_'+test_task+'_heatmap.png', bbox_inches='tight')
     else:
-        print('not enough information')
-
+        print('skipping heatmaps')
 def statsACC(df, classifier, analysis):
     if analysis=='CV':
-        print('cross validation')
+        print('cross validation stats')
         mu=df.mean()
         sd=df.std()
         stats=pd.DataFrame({'Mean':mu, 'Std':sd})
         stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='SS':
-        print('same sub')
+        print('same sub stats')
         df.drop(['sub'], axis=1, inplace=True)
         stats=df.groupby(['test_task', 'train_task']).mean()
         stats.rename(columns={'acc':'Mean'}, inplace=True)
@@ -89,7 +137,7 @@ def statsACC(df, classifier, analysis):
         stats.reset_index(inplace=True)
         stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='DS':
-        print('diff sub')
+        print('diff sub stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
         stats=df.groupby('task').mean()
         stats.rename(columns={'acc':'Mean'}, inplace=True)
@@ -97,61 +145,13 @@ def statsACC(df, classifier, analysis):
         stats['Std']=sd['acc']
         stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='BS':
-        print('diff sub diff task')
+        print('diff sub diff task stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
         stats=df.groupby(['test_task', 'train_task']).mean()
         stats.rename(columns={'acc':'Mean'}, inplace=True)
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
+        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     else:
-        print('not enough information')
-def boxACC(df, classifier, analysis):
-    if analysis=='CV':
-        print('cross validation')
-        df = pd.melt(df, id_vars=['sub'], value_vars=['mixed','motor','mem'], var_name='task', value_name='acc')
-        df.drop('sub', axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='task', y='acc', data=df)
-        ax.set_title('Cross Validation')
-        ax.set_xlabel('Test Task')
-        ax.set_ylabel('Accuracy')
-        fig=ax.get_figure()
-        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
-    elif analysis=='SS':
-        print('same sub')
-        df.drop(['sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
-        ax.axhline(.50, ls='--', color='r')
-        ax.set_title('Same Sub Between Task')
-        ax.set_xlabel('Test Task')
-        ax.set_ylabel('Accuracy')
-        ax.legend(title='Train Task',loc='upper right')
-        fig=ax.get_figure()
-        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
-    elif analysis=='DS':
-        print('diff sub')
-        df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='task', y='acc', data=df)
-        ax.axhline(.50, ls='--', color='r')
-        ax.set_title('Different Sub Same Task')
-        ax.set_xlabel('Test Task')
-        ax.set_ylabel('Accuracy')
-        fig=ax.get_figure()
-        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
-    elif analysis=='BS':
-        print('diff sub diff task')
-        df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
-        plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='test_task', y='acc', hue='train_task', data=df)
-        ax.axhline(.50, ls='--', color='r')
-        ax.set(ylim=(.4))
-        ax.set_title('Between Sub Between Task')
-        ax.set_xlabel('Test Task')
-        ax.set_ylabel('Accuracy')
-        ax.legend(title='Train Task',loc='upper right')
-        fig.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
-    else:
-        print('not enough information')
+        print('skipping stats')
