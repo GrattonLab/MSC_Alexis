@@ -1,6 +1,6 @@
 function accTable_efficiency(task, sublist,saveFolder)
     %get the size for your cells
-    filePath='/Users/aporter1350/Desktop/MSC_Alexis/analysis/output/results/MVPA_mat/between_sub_test'
+    time
     matFile='results_mat/only_good'
     accPath=strcat('acc_', saveFolder);
     tableSize=length(sublist)

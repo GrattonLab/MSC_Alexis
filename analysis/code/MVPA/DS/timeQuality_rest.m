@@ -1,25 +1,25 @@
 function timeQuality_rest(sub)
 %load mem timeseries
-    memFile=['/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_timecourse.mat'];
+    memFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_timecourse.mat'];
     memFC=load(memFile);
 %load tmask
-    mem_tmaskFile=['/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_mem_pass2/condindices.mat'];
+    mem_tmaskFile=['/Users/Alexis/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_mem_pass2/condindices.mat'];
     memTmask=load(mem_tmaskFile);
 %.Allmem will be different for Mixed
 %load motor timeseries
-    motorFile=['/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/' sub '_parcel_timecourse.mat'];
+    motorFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/' sub '_parcel_timecourse.mat'];
     motorFC=load(motorFile);
 %load tmask
-    motor_tmaskFile=['/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_motor_pass2/condindices.mat'];
+    motor_tmaskFile=['/Users/Alexis/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_motor_pass2/condindices.mat'];
     motorTmask=load(motor_tmaskFile);
 %load mixed timeseries
-    mixedFile=['/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_timecourse.mat'];
+    mixedFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/mixed/' sub '_parcel_timecourse.mat'];
     mixedFC=load(mixedFile);
 %load tmask
-    mixed_tmaskFile=['/Users/aporter1350/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_mixed_pass2/condindices.mat'];
+    mixed_tmaskFile=['/Users/Alexis/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_mixed_pass2/condindices.mat'];
     mixedTmask=load(mixed_tmaskFile);
 %load rest timeseries
-    restFile=['/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_timecourse.mat'];
+    restFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_timecourse.mat'];
     restFC=load(restFile);
 %after this masked time find time and match to rest
 %loop through all days
@@ -37,8 +37,6 @@ function timeQuality_rest(sub)
     end
     saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/timeQuality_rest/', sub, '_mem_parcel_corrmat.mat')]
     save(saveName, 'rest_memFC')
-%now for rest
-%loop through all days
 %now for mixed
 %all Glass
 %loop through all days

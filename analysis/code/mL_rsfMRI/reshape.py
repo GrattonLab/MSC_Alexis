@@ -14,13 +14,13 @@ import scipy.io
 def matFiles(df='path'):
     #Consistent parameters to use for editing datasets
     nrois=333
-    nsess=10
     #Load FC file
     fileFC=scipy.io.loadmat(df)
     #Convert to numpy array
     fileFC=np.array(fileFC['parcel_corrmat'])
     #Replace nans and infs with zero
     fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
     ds=np.empty((nsess, int(nrois*(nrois-1)/2)))

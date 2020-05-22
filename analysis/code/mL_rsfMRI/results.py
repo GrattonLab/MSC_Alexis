@@ -12,6 +12,7 @@ import results
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
 outDir = thisDir + 'output/mL/'
+
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -183,8 +184,8 @@ def cv_modelComp():
     ax.set(ylim=(.9, 1.03))
     ax.set_yticklabels(ticks)
     ax.set_title('Cross Validation Across Models')
-    ax.legend(loc='upper right')
-    plt.savefig(outDir +'presentation/cv_barplot.png', bbox_inches='tight')
+    ax.legend(title='Task',loc='upper right')
+    plt.savefig(outDir +'results/cv_barplot.png', bbox_inches='tight')
 
 def ds_boxplot():
     SVC=pd.read_csv(outDir+'results/SVC/acc/DS/acc.csv')
@@ -204,7 +205,7 @@ def ds_boxplot():
     ax.set_title('Different Subject Same Task Across Models')
     ax.legend(title='Task',loc='lower left')
     ax.set_ylabel('Accuracy')
-    plt.savefig(outDir +'presentation/ds_boxplot.png', bbox_inches='tight')
+    plt.savefig(outDir +'results/ds_boxplot.png', bbox_inches='tight')
 
 def ss_boxplot():
     SVC=pd.read_csv(outDir+'results/SVC/acc/SS/acc.csv')
@@ -226,8 +227,8 @@ def ss_boxplot():
     ax.set_ylabel('Accuracy', fontsize=25)
     ax.set_xlabel('Analysis', fontsize=25)
     ax.set_title('Same Subject Between Task Across Models', fontsize=30)
-    ax.legend(loc='lower left')
-    plt.savefig(outDir +'presentation/ss_boxplot.png', bbox_inches='tight')
+    ax.legend(title='Train.Test',loc='lower left')
+    plt.savefig(outDir +'results/ss_boxplot.png', bbox_inches='tight')
 def bs_boxplot():
     SVC=pd.read_csv(outDir+'results/SVC/acc/BS/acc.csv')
     SVC['Analysis']='SVC'
@@ -248,5 +249,5 @@ def bs_boxplot():
     ax.set_ylabel('Accuracy', fontsize=25)
     ax.set_xlabel('Analysis', fontsize=25)
     ax.set_title('Different Subject Different Task Across Models', fontsize=30)
-    ax.legend(loc='lower left')
-    plt.savefig(outDir +'presentation/bs_boxplot.png', bbox_inches='tight')
+    ax.legend(title='Train.Test',loc='lower left')
+    plt.savefig(outDir +'results/bs_boxplot.png', bbox_inches='tight')
