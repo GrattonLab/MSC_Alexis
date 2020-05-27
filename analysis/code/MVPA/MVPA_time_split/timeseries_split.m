@@ -1,5 +1,6 @@
 function timeseries_split(sub)
 %load mem timeseries
+%{
     memFile=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_timecourse.mat'];
     memFC=load(memFile);
 %load tmask
@@ -18,11 +19,13 @@ function timeseries_split(sub)
 %load tmask
     mixed_tmaskFile=['~/Box/Quest_Backup/MSC/TaskFC/FCProc_' sub '_mixed_pass2/condindices.mat'];
     mixedTmask=load(mixed_tmaskFile);
+    %}
 %load rest timeseries
     restFile=['~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_timecourse.mat'];
     restFC=load(restFile);
 %after this masked time split up into pieces then run as corr
 %loop through all days
+%{
     parel_corrmat=[]
     nsamples = size(memFC.parcel_time, 2);
     for i=1:nsamples
@@ -42,9 +45,10 @@ function timeseries_split(sub)
     end
     saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/corrmats_timesplit/', sub, '_parcel_corrmat.mat')]
     save(saveName, 'memFC_all')
+    %}
 %now for rest
 %loop through all days
-    restFC_all=[]
+    parcel_corrmat=[]
     restsamples = size(restFC.parcel_time, 2);
     for i=1:restsamples
         restmasked_time = restFC.parcel_time{i}(logical(restFC.tmask_all{i}),:);
@@ -57,13 +61,14 @@ function timeseries_split(sub)
         rt2=corr(resttime2);
         zrt2=atanh(rt2);
         rt=cat(3, zrt1, zrt2);
-        restFC_all=cat(3, restFC_all, rt);
+        parcel_corrmat=cat(3, parcel_corrmat, rt);
     end
-    saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/corrmats_timesplit/', sub, '_parcel_corrmat.mat')]
-    save(saveName, 'restFC_all')
+    saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/corrmats_timesplit/half/', sub, '_parcel_corrmat.mat')]
+    save(saveName, 'parcel_corrmat')
 %now for mixed
 %all Glass
 %loop through all days
+%{
     glassFC_all=[]
     mixsamples = size(mixedFC.parcel_time, 2);
     for i=1:mixsamples
@@ -124,4 +129,5 @@ function timeseries_split(sub)
     end
     saveName=[strcat('~/Desktop/MSC_Alexis/analysis/data/mvpa_data/motor/corrmats_timesplit/', sub, '_parcel_corrmat.mat')]
     save(saveName, 'motorFC_all')
+%}
 end 
