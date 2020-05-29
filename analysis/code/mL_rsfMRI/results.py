@@ -11,10 +11,11 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/mLdoubleRest/'
+outDir = thisDir + 'output/mL/'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
+#taskList=['pres1', 'pres2','pres3']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 def boxACC(df, classifier, analysis):
     if analysis=='CV':
@@ -181,10 +182,10 @@ def cv_modelComp():
     sns.set_context("talk")
     plt.figure(figsize=(15,8))
     ax=sns.barplot('Analysis', 'Accuracy', hue='Task', data=result)
-    ax.set(ylim=(.9, 1.03))
+    ax.set(ylim=(.9, 1))
     ax.set_yticklabels(ticks)
     ax.set_title('Cross Validation Across Models')
-    ax.legend(title='Task',loc='upper right')
+    ax.legend(title='Task',loc='lower right')
     plt.savefig(outDir +'results/cv_barplot.png', bbox_inches='tight')
 
 def ds_boxplot():

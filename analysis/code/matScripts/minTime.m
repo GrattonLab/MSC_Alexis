@@ -1,5 +1,5 @@
 function minTime(sub)
-%load mem timeseries
+%load meåm timeseries
     memFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_timecourse.mat'];
     memFC=load(memFile);
 %load tmask
