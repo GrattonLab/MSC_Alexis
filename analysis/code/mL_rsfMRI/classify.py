@@ -4,6 +4,7 @@
 # In[2]:
 
 from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import KFold
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import RidgeClassifier
@@ -22,10 +23,11 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/mL/'
+outDir = thisDir + 'output/mLmax/'
 # Subjects and tasks
 taskList=['mixed', 'motor','mem']
-subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+#subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 tasksComb=(list(itertools.permutations(taskList, 2)))
@@ -110,15 +112,15 @@ def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
         clf=RidgeClassifier()
     else:
         print('Error: You didnt specify what classifier')
-    taskFC=reshape.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
-    restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
+    taskFC=reshape.matFiles(dataDir+train_task+'/tmask_all/'+train_sub+'_parcel_corrmat.mat')
+    restFC=reshape.matFiles(dataDir+'rest/tmask_all/'+train_sub+'_parcel_corrmat.mat')
     #if your subs are the same
     if train_sub==test_sub:
-        test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
+        test_taskFC=reshape.matFiles(dataDir+test_task+'/tmask_all/'+test_sub+'_parcel_corrmat.mat')
         ACCscores=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
     else:
-        test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-        test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
+        test_taskFC=reshape.matFiles(dataDir+test_task+'/tmask_all/'+test_sub+'_parcel_corrmat.mat')
+        test_restFC=reshape.matFiles(dataDir+'rest/tmask_all/'+test_sub+'_parcel_corrmat.mat')
         ACCscores=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
     return ACCscores
 #Calculate acc of cross validation within sub within task
@@ -136,8 +138,8 @@ def classifyCV(classifier, analysis):
         acc_scores_per_task=[]
         cvTable=[]
         for sub in subList:
-            taskFC=reshape.matFiles(dataDir+task+'/'+sub+'_parcel_corrmat.mat')
-            restFC=reshape.matFiles(dataDir+'rest/'+sub+'_parcel_corrmat.mat')
+            taskFC=reshape.matFiles(dataDir+task+'/tmask_all/'+sub+'_parcel_corrmat.mat')
+            restFC=reshape.matFiles(dataDir+'rest/tmask_all/'+sub+'_parcel_corrmat.mat')
             folds=taskFC.shape[0]
             x_train, y_train=reshape.concateFC(taskFC, restFC)
             CVscores=cross_val_score(clf, x_train, y_train, cv=folds)

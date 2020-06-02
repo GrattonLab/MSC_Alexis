@@ -11,12 +11,13 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/mL/'
+outDir = thisDir + 'output/mLmax/'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
 #taskList=['pres1', 'pres2','pres3']
-subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+#subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
 def boxACC(df, classifier, analysis):
     if analysis=='CV':
         print('cross validation boxplots')
