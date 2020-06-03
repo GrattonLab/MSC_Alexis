@@ -23,11 +23,11 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/mLmax/'
+outDir = thisDir + 'output/mL/'
 # Subjects and tasks
 taskList=['mixed', 'motor','mem']
-#subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
-subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
+subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+#subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 tasksComb=(list(itertools.permutations(taskList, 2)))
@@ -112,15 +112,15 @@ def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
         clf=RidgeClassifier()
     else:
         print('Error: You didnt specify what classifier')
-    taskFC=reshape.matFiles(dataDir+train_task+'/tmask_all/'+train_sub+'_parcel_corrmat.mat')
-    restFC=reshape.matFiles(dataDir+'rest/tmask_all/'+train_sub+'_parcel_corrmat.mat')
+    taskFC=reshape.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
+    restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
     #if your subs are the same
     if train_sub==test_sub:
-        test_taskFC=reshape.matFiles(dataDir+test_task+'/tmask_all/'+test_sub+'_parcel_corrmat.mat')
+        test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         ACCscores=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
     else:
-        test_taskFC=reshape.matFiles(dataDir+test_task+'/tmask_all/'+test_sub+'_parcel_corrmat.mat')
-        test_restFC=reshape.matFiles(dataDir+'rest/tmask_all/'+test_sub+'_parcel_corrmat.mat')
+        test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
+        test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
         ACCscores=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
     return ACCscores
 #Calculate acc of cross validation within sub within task
@@ -138,8 +138,8 @@ def classifyCV(classifier, analysis):
         acc_scores_per_task=[]
         cvTable=[]
         for sub in subList:
-            taskFC=reshape.matFiles(dataDir+task+'/tmask_all/'+sub+'_parcel_corrmat.mat')
-            restFC=reshape.matFiles(dataDir+'rest/tmask_all/'+sub+'_parcel_corrmat.mat')
+            taskFC=reshape.matFiles(dataDir+task+'/'+sub+'_parcel_corrmat.mat')
+            restFC=reshape.matFiles(dataDir+'rest/'+sub+'_parcel_corrmat.mat')
             folds=taskFC.shape[0]
             x_train, y_train=reshape.concateFC(taskFC, restFC)
             CVscores=cross_val_score(clf, x_train, y_train, cv=folds)
@@ -167,51 +167,61 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
     t = np.ones(taskSize, dtype = int)
     r=np.zeros(restSize, dtype=int)
     if analysis=='SS':
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
+        df=pd.DataFrame()
+        acc_score=[]
         for train_index, test_index in loo.split(taskFC):
             Xtrain_rest, Xtest_rest=restFC[train_index], restFC[test_index]
-            Xtrain_task, Xtest_task=taskFC[train_index], test_taskFC[test_index]
-
-            ytrain_rest, ytest_rest=r[train_index], r[test_index]
-            ytrain_task, ytest_task=t[train_index], t[test_index]
-
+            Xtrain_task=taskFC[train_index]
+            ytrain_rest=r[train_index]
+            ytrain_task=t[train_index]
             X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
             y_tr = np.concatenate((ytrain_task,ytrain_rest))
-
-            X_Test = np.concatenate((Xtest_task, Xtest_rest))
-            y_Test = np.concatenate((ytest_task,ytest_rest))
             clf.fit(X_tr,y_tr)
-            #test set
-            clf.predict(X_Test)
-            #Get accuracy of model
-            ACCscores=clf.score(X_Test,y_Test)
-            acc_scores_per_fold.append(ACCscores)
-        tmpdf['folds']=acc_scores_per_fold
-        score=tmpdf['folds'].mean()
-
+            tmpdf=pd.DataFrame()
+            acc_scores_per_fold=[]
+            for t_index, te_index in loo.split(test_taskFC):
+                Xtest_task=test_taskFC[te_index]
+                X_Test = np.concatenate((Xtest_task, Xtest_rest))
+                y_Test = np.array([1, 0])
+                #test set
+                clf.predict(X_Test)
+                #Get accuracy of model
+                ACCscores=clf.score(X_Test,y_Test)
+                acc_scores_per_fold.append(ACCscores)
+            tmpdf['inner_fold']=acc_scores_per_fold
+            score=tmpdf['inner_fold'].mean()
+            acc_score.append(score)
+        df['outer_fold']=acc_score
+        total_score=df['outer_fold'].mean()
     else:
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
+        df=pd.DataFrame()
+        acc_score=[]
+        #fold each training set
         for train_index, test_index in loo.split(taskFC):
-            Xtrain_rest, Xtest_rest=restFC[train_index], test_restFC[test_index]
-            Xtrain_task, Xtest_task=taskFC[train_index], test_taskFC[test_index]
-
-            ytrain_rest, ytest_rest=r[train_index], r[test_index]
-            ytrain_task, ytest_task=t[train_index], t[test_index]
-
+            Xtrain_rest=restFC[train_index]
+            Xtrain_task=taskFC[train_index]
+            ytrain_rest=r[train_index]
+            ytrain_task=t[train_index]
             X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
             y_tr = np.concatenate((ytrain_task,ytrain_rest))
-
-            X_Test = np.concatenate((Xtest_task, Xtest_rest))
-            y_Test = np.concatenate((ytest_task,ytest_rest))
             clf.fit(X_tr,y_tr)
-            #test set
-            clf.predict(X_Test)
-            #Get accuracy of model
-            ACCscores=clf.score(X_Test,y_Test)
-            acc_scores_per_fold.append(ACCscores)
-        tmpdf['folds']=acc_scores_per_fold
-        score=tmpdf['folds'].mean()
+            tmpdf=pd.DataFrame()
+            acc_scores_per_fold=[]
+            #fold each testing set
+            for t_index, te_index in loo.split(test_taskFC):
+                Xtest_rest=test_restFC[te_index]
+                Xtest_task=test_taskFC[te_index]
+                X_te=np.concatenate((Xtest_task, Xtest_rest))
+                y_te=np.array([1, 0])
+                #test set
+                clf.predict(X_te)
+                #Get accuracy of model
+                ACCscores=clf.score(X_te,y_te)
+                acc_scores_per_fold.append(ACCscores)
+            tmpdf['inner_fold']=acc_scores_per_fold
+            score=tmpdf['inner_fold'].mean()
+            acc_score.append(score)
+        df['outer_fold']=acc_score
+        total_score=df['outer_fold'].mean()
 
-    return score
+    return total_score

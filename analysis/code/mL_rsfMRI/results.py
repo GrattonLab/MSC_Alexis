@@ -11,7 +11,7 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/mLmax/'
+outDir = thisDir + 'output/mL/'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
