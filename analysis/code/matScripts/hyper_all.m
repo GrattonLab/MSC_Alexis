@@ -1,7 +1,7 @@
 function hyper_all()    
 
 
-trainList={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'};
+trainList={'MSC02','MSC04','MSC05','MSC06','MSC07'};
 
 
  
@@ -32,7 +32,7 @@ for sub=1:length(trainList)
         end   
     end
     mix_cell=cell(~cellfun('isempty',cell));
-
+%{
     clear nsamples cell time
     motorFile=strcat('motor/', trainList{sub}, parcelFile);
     motorFC=fullfile(filePath,motorFile);
@@ -45,11 +45,11 @@ for sub=1:length(trainList)
         end   
     end
     motor_cell=cell(~cellfun('isempty',cell));
-         
+%}         
     
     clear nsamples cell time
     restFile=strcat('rest/', trainList{sub}, parcelFile);
-    restFC=fullfile(filePath,mixFile);
+    restFC=fullfile(filePath,restFile);
     rest=load(restFC);
     nsamples=size(rest.parcel_time,2);
     for day=1:nsamples
@@ -62,9 +62,9 @@ for sub=1:length(trainList)
 %now that you have all your time series 
     memSize=size(mem_cell,2);
     mixSize=size(mix_cell,2);
-    motorSize=size(motor_cell,2);
+    %motorSize=size(motor_cell,2);
     restSize=size(rest_cell,2);
-    aligned=hyperalign(mem_cell{:},mix_cell{:},motor_cell{:},rest_cell{:});
+    aligned=hyperalign(mem_cell{:},mix_cell{:},rest_cell{:});%,motor_cell{:},rest_cell{:});
     
     memT=aligned(1,1:memSize);
     mixT=aligned(1, memSize+1:memSize+mixSize);
