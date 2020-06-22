@@ -25,6 +25,17 @@ clear memFile memFC
 memFile=strcat('mem/MSC07', parcelFile);
 memFC=fullfile(filePath,memFile);
 mem07=load(memFC);
+
+
+
+mem02_aligned=hyperalign(mem02.parcel_corrmat(:,:,:));
+parcel_corrmat=mem02_aligned{1,1};
+saveName=[strcat('/Users/Alexis/Desktop/MSC_Alexis/analysis/data/all_sub_hyperalign/mem/MSC02_parcel_corrmat.mat')];
+save(saveName, 'parcel_corrmat');
+
+
+
+
 nsamples=10;
 for day=1:nsamples
     cell02{day}=mem02.parcel_corrmat(:,:,day); 
@@ -52,10 +63,10 @@ mixedFC=fullfile(filePath,mixedFile);
 mixed07=load(mixedFC);
 
 for day=1:nsamples
-    cell02{day}=mixed02.parcel_time{day}(logical(mixed02.tmask_all{day}),:); 
-    cell04{day}=mixed04.parcel_time{day}(logical(mixed04.tmask_all{day}),:); 
-    cell05{day}=mixed05.parcel_time{day}(logical(mixed05.tmask_all{day}),:); 
-    cell07{day}=mixed07.parcel_time{day}(logical(mixed07.tmask_all{day}),:); 
+    cell02{day}=mixed02.parcel_corrmat(:,:,day); 
+    cell04{day}=mixed04.parcel_corrmat(:,:,day); 
+    cell05{day}=mixed05.parcel_corrmat(:,:,day); 
+    cell07{day}=mixed07.parcel_corrmat(:,:,day); 
 end
 mix_cell=[cell02,cell04,cell05,cell07];
 
@@ -77,6 +88,9 @@ restFile=strcat('rest/MSC07', parcelFile);
 restFC=fullfile(filePath,restFile);
 rest07=load(restFC);
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for day=1:nsamples
     cell02{day}=rest02.parcel_time{day}(logical(rest02.tmask_all{day}),:); 
     cell04{day}=rest04.parcel_time{day}(logical(rest04.tmask_all{day}),:); 

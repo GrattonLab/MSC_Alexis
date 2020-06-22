@@ -1,6 +1,7 @@
 function hyper_corrmats(sub)
 %load all your data
 filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/all_sub_hyperalign';
+%filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data';
 parcelFile='_parcel_corrmat.mat';
 %mem
 memFile=strcat('mem/', sub, parcelFile);
@@ -16,16 +17,20 @@ restFC=fullfile(filePath,restFile);
 rest=load(restFC).parcel_corrmat;
 
 
-rest_avg=mean(rest,3)
-rest_avg=real(rest_avg)
-fig=figure_corrmat_network_generic(rest_avg, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
-%caxis([.75,1]);
+
 
 
 mem_avg=mean(mem,3)
 mem_avg=real(mem_avg)
 fig=figure_corrmat_network_generic(mem_avg, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
-caxis([.75,1]);
+caxis([-1,1]);
+
+
+rest_avg=mean(rest,3)
+rest_avg=real(rest_avg)
+fig=figure_corrmat_network_generic(rest_avg, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
+%caxis([.75,1]);
+
 
 %loop through each day 
 for i=1:size(mem,3)
