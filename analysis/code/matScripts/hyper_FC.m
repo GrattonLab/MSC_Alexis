@@ -12,11 +12,13 @@ parcelFile='_parcel_corrmat.mat';
 %mem
 memFile=strcat('mem/MSC02', parcelFile);
 memFC=fullfile(filePath,memFile);
-mem02=load(memFC);
+%mem02=load(memFC);
+mem02=load(memFC).parcel_corrmat;
 clear memFile memFC
 memFile=strcat('mem/MSC04', parcelFile);
 memFC=fullfile(filePath,memFile);
-mem04=load(memFC);
+%mem04=load(memFC);
+mem04=load(memFC).parcel_corrmat;
 clear memFile memFC
 memFile=strcat('mem/MSC05', parcelFile);
 memFC=fullfile(filePath,memFile);
@@ -27,14 +29,15 @@ memFC=fullfile(filePath,memFile);
 mem07=load(memFC);
 
 
-
+%{
 mem02_aligned=hyperalign(mem02.parcel_corrmat(:,:,:));
 parcel_corrmat=mem02_aligned{1,1};
 saveName=[strcat('/Users/Alexis/Desktop/MSC_Alexis/analysis/data/all_sub_hyperalign/mem/MSC02_parcel_corrmat.mat')];
 save(saveName, 'parcel_corrmat');
+%}
 
-
-
+avg02=mean(mem02,3)
+avg04=mean(mem04,3)
 
 nsamples=10;
 for day=1:nsamples

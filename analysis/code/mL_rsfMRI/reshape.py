@@ -10,7 +10,8 @@ import sys
 import os
 import pandas as pd
 import scipy.io
-
+import plotFW
+thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 def matFiles(df='path'):
     #Consistent parameters to use for editing datasets
     nrois=333
@@ -40,6 +41,59 @@ def concateFC(taskFC, restFC):
     y = np.concatenate((t,r))
     return x, y
 
+def subNets(df='path', networkLabel='networklabel'):
+    """options for networks ['unassign',
+ 'default',
+ 'visual',
+ 'fp',
+ 'dan',
+ 'van',
+ 'salience',
+ 'co',
+ 'sm',
+ 'sm-lat',
+ 'auditory',
+ 'pmn',
+ 'pon'] """
+ #roi count for building arrays
+    netRoi=dict([('default', 13653),('visual',12987),('fp', 7992),('dan',10656),('van',7659),('salience', 1332),('co', 13320),('sm', 12654),('sm-lat', 2664),('auditory', 7992),('pmn',1665),('pon',2331)])
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    dsNet=np.empty((nsess, netRoi[networkLabel]))
+    dsNet_count=0
+    for sess in range(nsess):
+        ds=fileFC[:,:,sess]
+        Parcel_params = plotFW.loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
+        roi_sort = np.squeeze(Parcel_params['roi_sort'])
+        corrmat=ds[roi_sort,:][:,roi_sort]
+        nrois=list(range(333))
+        nets=[]
+        position=0
+        count=0
+        networks=Parcel_params['networks']
+        t=Parcel_params['transitions']
+    #have to add extra value otherwise error
+        transitions=np.append(t,333)
+        while count<333:
+            if count<=transitions[position]:
+                nets.append(networks[position])
+                count=count+1
+            else:
+                position=position+1
+        #transform data to locate network
+        df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+        #avoid duplicates by taking upper triangle k=1 so we don't take the first value
+        df_ut = df.where(np.triu(np.ones(df.shape)).astype(np.bool),1)
+        df_new=df_ut.loc[[networkLabel]]
+        #convert to array
+        array=df_new.to_numpy()
+        #remove nans
+        clean_array = array[~np.isnan(array)]
+        dsNet[dsNet_count]=clean_array
+        dsNet_count=dsNet_count+1
+    return dsNet
 # In[ ]:
 
 

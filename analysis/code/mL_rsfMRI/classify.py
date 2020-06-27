@@ -22,8 +22,8 @@ import plotFW
 import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
-dataDir = thisDir + 'data/all_task_within_sub_hyperalign/'
-outDir = thisDir + 'output/all_task_within_sub_hyperalign/'
+dataDir = thisDir + 'data/mvpa_data/'
+outDir = thisDir + 'output/mL/'
 # Subjects and tasks
 taskList=['mixed', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']

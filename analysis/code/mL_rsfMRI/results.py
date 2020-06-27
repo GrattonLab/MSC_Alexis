@@ -10,8 +10,8 @@ import plotFW
 import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
-dataDir = thisDir + 'data/all_task_within_sub_hyperalign/'
-outDir = thisDir + 'output/all_task_within_sub_hyperalign/'
+dataDir = thisDir + 'data/mvpa_data/'
+outDir = thisDir + 'output/subNetsFP/'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']

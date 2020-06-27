@@ -1,12 +1,20 @@
 function hyper_corrmats(sub)
 %load all your data
-filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/all_sub_hyperalign';
-%filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data';
+%filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/all_sub_hyperalign';
+filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data';
 parcelFile='_parcel_corrmat.mat';
+%parcelFile='_avg_corrmat.mat';
 %mem
 memFile=strcat('mem/', sub, parcelFile);
 memFC=fullfile(filePath,memFile);
 mem=load(memFC).parcel_corrmat;
+%mem=load(memFC).MSC02;
+
+%{
+fig=figure_corrmat_network_generic(mem, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
+caxis([-1,1]);
+saveas(fig, sprintf('/Users/Alexis/Desktop/MSC_Alexis/analysis/output/all_sub_hyperalign/images/corrmat/%s_avg_mem.png', sub));
+
 %mixed
 mixFile=strcat('mixed/', sub, parcelFile);
 mixFC=fullfile(filePath,mixFile);
@@ -19,25 +27,24 @@ rest=load(restFC).parcel_corrmat;
 
 
 
-
 mem_avg=mean(mem,3)
 mem_avg=real(mem_avg)
 fig=figure_corrmat_network_generic(mem_avg, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
 caxis([-1,1]);
-
+saveas(fig, sprintf('/Users/Alexis/Desktop/MSC_Alexis/analysis/output/all_sub_hyperalign/images/corrmat/%s_avg_mem_notHy.png', sub));
 
 rest_avg=mean(rest,3)
 rest_avg=real(rest_avg)
 fig=figure_corrmat_network_generic(rest_avg, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
 %caxis([.75,1]);
-
+%}
 
 %loop through each day 
 for i=1:size(mem,3)
     day=mem(:,:, i);
     fig=figure_corrmat_network_generic(day, atlas_parameters('Parcels','~/Box/Quest_Backup/Atlases/Evan_parcellation/'));
-    caxis([.75,1]);
-    saveas(fig, sprintf('/Users/Alexis/Desktop/MSC_Alexis/analysis/output/all_sub_hyperalign/images/corrmat/%s_day%d_mem.png', sub,i));
+    caxis([-1,1]);
+    saveas(fig, sprintf('/Users/Alexis/Desktop/MSC_Alexis/analysis/output/all_sub_hyperalign/images/corrmat/%s_day%d_mem_notHy.png', sub,i));
 end 
 
 
