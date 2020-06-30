@@ -41,7 +41,7 @@ def concateFC(taskFC, restFC):
     y = np.concatenate((t,r))
     return x, y
 
-def subNets(df='path', networkLabel='networklabel'):
+def subNets(df='path', networkLabel='networklabel', otherNets=None):
     """options for networks ['unassign',
  'default',
  'visual',
@@ -61,7 +61,11 @@ def subNets(df='path', networkLabel='networklabel'):
     fileFC=np.array(fileFC['parcel_corrmat'])
     fileFC=np.nan_to_num(fileFC)
     nsess=fileFC.shape[2]
-    dsNet=np.empty((nsess, netRoi[networkLabel]))
+    if otherNets is None:
+        dsNet=np.empty((nsess, netRoi[networkLabel]))
+    else:
+        netLength=netRoi[networkLabel]+netRoi[otherNets]
+        dsNet=np.empty((nsess, netLength))
     dsNet_count=0
     for sess in range(nsess):
         ds=fileFC[:,:,sess]
@@ -86,7 +90,10 @@ def subNets(df='path', networkLabel='networklabel'):
         df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
         #avoid duplicates by taking upper triangle k=1 so we don't take the first value
         df_ut = df.where(np.triu(np.ones(df.shape)).astype(np.bool),1)
-        df_new=df_ut.loc[[networkLabel]]
+        if otherNets is None:
+            df_new=df_ut.loc[[networkLabel]]
+        else:
+            df_new=df_ut.loc[[networkLabel, otherNets]]
         #convert to array
         array=df_new.to_numpy()
         #remove nans

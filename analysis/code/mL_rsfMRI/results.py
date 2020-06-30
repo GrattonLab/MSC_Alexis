@@ -11,7 +11,7 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/subNetsFP/'
+outDir = thisDir + 'output/subNetwork/fp_co'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
@@ -126,13 +126,13 @@ def plotACC(df, classifier, analysis):
                     plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/train_'+train_task+'_test_'+test_task+'_heatmap.png', bbox_inches='tight')
     else:
         print('skipping heatmaps')
-def statsACC(df, classifier, analysis):
+def statsACC(df, classifier, analysis, network):
     if analysis=='CV':
         print('cross validation stats')
         mu=df.mean()
         sd=df.std()
         stats=pd.DataFrame({'Mean':mu, 'Std':sd})
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='SS':
         print('same sub stats')
         df.drop(['sub'], axis=1, inplace=True)
@@ -141,7 +141,7 @@ def statsACC(df, classifier, analysis):
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='DS':
         print('diff sub stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
@@ -149,7 +149,7 @@ def statsACC(df, classifier, analysis):
         stats.rename(columns={'acc':'Mean'}, inplace=True)
         sd=df.groupby('task').std()
         stats['Std']=sd['acc']
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='BS':
         print('diff sub diff task stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
@@ -158,7 +158,7 @@ def statsACC(df, classifier, analysis):
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
-        stats.to_csv(outDir+ 'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     else:
         print('skipping stats')
 
