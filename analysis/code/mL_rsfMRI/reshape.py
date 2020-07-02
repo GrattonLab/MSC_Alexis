@@ -56,7 +56,7 @@ def subNets(df='path', networkLabel='networklabel', otherNets=None):
  'pmn',
  'pon'] """
  #roi count for building arrays
-    netRoi=dict([('default', 13653),('visual',12987),('fp', 7992),('dan',10656),('van',7659),('salience', 1332),('co', 13320),('sm', 12654),('sm-lat', 2664),('auditory', 7992),('pmn',1665),('pon',2331)])
+    netRoi=dict([('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 484),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
     fileFC=scipy.io.loadmat(df)
     fileFC=np.array(fileFC['parcel_corrmat'])
     fileFC=np.nan_to_num(fileFC)
@@ -89,18 +89,79 @@ def subNets(df='path', networkLabel='networklabel', otherNets=None):
         #transform data to locate network
         df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
         #avoid duplicates by taking upper triangle k=1 so we don't take the first value
-        df_ut = df.where(np.triu(np.ones(df.shape)).astype(np.bool),1)
+        df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
         if otherNets is None:
             df_new=df_ut.loc[[networkLabel]]
         else:
             df_new=df_ut.loc[[networkLabel, otherNets]]
         #convert to array
-        array=df_new.to_numpy()
+        array=df_new.values
         #remove nans
         clean_array = array[~np.isnan(array)]
         dsNet[dsNet_count]=clean_array
         dsNet_count=dsNet_count+1
     return dsNet
+
+#looking at the blocks of networks ex: default to default connections. This scripts grabs all network blocks
+def subBlock(df='path'):
+    """options for networks ['unassign',
+ 'default',
+ 'visual',
+ 'fp',
+ 'dan',
+ 'van',
+ 'salience',
+ 'co',
+ 'sm',
+ 'sm-lat',
+ 'auditory',
+ 'pmn',
+ 'pon'] """
+ #roi count for building arrays
+    netRoi=dict([('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 484),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    dsNet=np.empty((nsess, 4410))
+    dsNet_count=0
+    for sess in range(nsess):
+        ds=fileFC[:,:,sess]
+        Parcel_params = plotFW.loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
+        roi_sort = np.squeeze(Parcel_params['roi_sort'])
+        corrmat=ds[roi_sort,:][:,roi_sort]
+        nrois=list(range(333))
+        nets=[]
+        position=0
+        count=0
+        networks=Parcel_params['networks']
+        t=Parcel_params['transitions']
+    #have to add extra value otherwise error
+        transitions=np.append(t,333)
+        while count<333:
+            if count<=transitions[position]:
+                nets.append(networks[position])
+                count=count+1
+            else:
+                position=position+1
+        #transform data to locate network
+        df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+        #avoid duplicates by taking upper triangle k=1 so we don't take the first value
+        df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+        #initlize empty
+        allBlocks=np.array([])
+        for network in netRoi:
+            df_new=df_ut.loc[[network]]
+            tmp=df_new[network].values
+            clean_array = tmp[~np.isnan(tmp)]
+            #stack all blocks horizontally
+            allBlocks=np.append(allBlocks,clean_array)
+        dsNet[dsNet_count]=allBlocks
+        dsNet_count=dsNet_count+1
+    return dsNet
+
+
+
 # In[ ]:
 
 

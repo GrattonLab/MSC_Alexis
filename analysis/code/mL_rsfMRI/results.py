@@ -11,7 +11,7 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/subNetwork/fp_co'
+outDir = thisDir + 'output/subNetwork/'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
@@ -132,7 +132,7 @@ def statsACC(df, classifier, analysis, network):
         mu=df.mean()
         sd=df.std()
         stats=pd.DataFrame({'Mean':mu, 'Std':sd})
-        stats.to_csv(outDir'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='SS':
         print('same sub stats')
         df.drop(['sub'], axis=1, inplace=True)
@@ -141,7 +141,7 @@ def statsACC(df, classifier, analysis, network):
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
-        stats.to_csv(outDir+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='DS':
         print('diff sub stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
@@ -149,7 +149,7 @@ def statsACC(df, classifier, analysis, network):
         stats.rename(columns={'acc':'Mean'}, inplace=True)
         sd=df.groupby('task').std()
         stats['Std']=sd['acc']
-        stats.to_csv(outDir+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='BS':
         print('diff sub diff task stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
@@ -158,14 +158,14 @@ def statsACC(df, classifier, analysis, network):
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
-        stats.to_csv(outDir+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     else:
         print('skipping stats')
 
 def cv_modelComp():
-    SVC=pd.read_csv(outDir+'results/SVC/acc/CV/acc.csv')
-    log=pd.read_csv(outDir+'results/logReg/acc/CV/acc.csv')
-    ridge=pd.read_csv(outDir+'results/Ridge/acc/CV/acc.csv')
+    SVC=pd.read_csv(outDir+'subBlock/results/SVC/acc/CV/acc.csv')
+    log=pd.read_csv(outDir+'subBlock/results/logReg/acc/CV/acc.csv')
+    ridge=pd.read_csv(outDir+'subBlock/results/Ridge/acc/CV/acc.csv')
     SVC.drop(columns='sub', inplace=True)
     SVC_un=SVC.melt(value_vars=['mixed', 'motor','mem'], var_name='Task', value_name='Accuracy')
     SVC_un['Analysis']='SVC'
@@ -187,14 +187,14 @@ def cv_modelComp():
     ax.set_yticklabels(ticks)
     ax.set_title('Cross Validation Across Models')
     ax.legend(title='Task',loc='lower right')
-    plt.savefig(outDir +'results/cv_barplot.png', bbox_inches='tight')
+    plt.savefig(outDir +'subBlock/results/cv_barplot.png', bbox_inches='tight')
 
 def ds_boxplot():
-    SVC=pd.read_csv(outDir+'results/SVC/acc/DS/acc.csv')
+    SVC=pd.read_csv(outDir+'subBlock/results/SVC/acc/DS/acc.csv')
     SVC['Analysis']='SVC'
-    log=pd.read_csv(outDir+'results/logReg/acc/DS/acc.csv')
+    log=pd.read_csv(outDir+'subBlock/results/logReg/acc/DS/acc.csv')
     log['Analysis']='logReg'
-    ridge=pd.read_csv(outDir+'results/Ridge/acc/DS/acc.csv')
+    ridge=pd.read_csv(outDir+'subBlock/results/Ridge/acc/DS/acc.csv')
     ridge['Analysis']='Ridge'
     classifiers=[SVC, log, ridge]
     result = pd.concat(classifiers)
@@ -207,14 +207,14 @@ def ds_boxplot():
     ax.set_title('Different Subject Same Task Across Models')
     ax.legend(title='Task',loc='lower left')
     ax.set_ylabel('Accuracy')
-    plt.savefig(outDir +'results/ds_boxplot.png', bbox_inches='tight')
+    plt.savefig(outDir +'subBlock/results/ds_boxplot.png', bbox_inches='tight')
 
 def ss_boxplot():
-    SVC=pd.read_csv(outDir+'results/SVC/acc/SS/acc.csv')
+    SVC=pd.read_csv(outDir+'subBlock/results/SVC/acc/SS/acc.csv')
     SVC['Analysis']='SVC'
-    log=pd.read_csv(outDir+'results/logReg/acc/SS/acc.csv')
+    log=pd.read_csv(outDir+'subBlock/results/logReg/acc/SS/acc.csv')
     log['Analysis']='logReg'
-    ridge=pd.read_csv(outDir+'results/Ridge/acc/SS/acc.csv')
+    ridge=pd.read_csv(outDir+'subBlock/results/Ridge/acc/SS/acc.csv')
     ridge['Analysis']='Ridge'
     classifiers=[SVC, log, ridge]
     result = pd.concat(classifiers)
@@ -230,13 +230,13 @@ def ss_boxplot():
     ax.set_xlabel('Analysis', fontsize=25)
     ax.set_title('Same Subject Between Task Across Models', fontsize=30)
     ax.legend(title='Train.Test',loc='lower left')
-    plt.savefig(outDir +'results/ss_boxplot.png', bbox_inches='tight')
+    plt.savefig(outDir +'subBlock/results/ss_boxplot.png', bbox_inches='tight')
 def bs_boxplot():
-    SVC=pd.read_csv(outDir+'results/SVC/acc/BS/acc.csv')
+    SVC=pd.read_csv(outDir+'subBlock/results/SVC/acc/BS/acc.csv')
     SVC['Analysis']='SVC'
-    log=pd.read_csv(outDir+'results/logReg/acc/BS/acc.csv')
+    log=pd.read_csv(outDir+'subBlock/results/logReg/acc/BS/acc.csv')
     log['Analysis']='logReg'
-    ridge=pd.read_csv(outDir+'results/Ridge/acc/BS/acc.csv')
+    ridge=pd.read_csv(outDir+'subBlock/results/Ridge/acc/BS/acc.csv')
     ridge['Analysis']='Ridge'
     classifiers=[SVC, log, ridge]
     result = pd.concat(classifiers)
@@ -252,4 +252,4 @@ def bs_boxplot():
     ax.set_xlabel('Analysis', fontsize=25)
     ax.set_title('Different Subject Different Task Across Models', fontsize=30)
     ax.legend(title='Train.Test',loc='lower left')
-    plt.savefig(outDir +'results/bs_boxplot.png', bbox_inches='tight')
+    plt.savefig(outDir +'subBlock/results/bs_boxplot.png', bbox_inches='tight')
