@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # coding: utf-8
 
@@ -117,7 +118,7 @@ def figure_corrmat(corrmat,Parcel_params, clims=(-1,1)):
     plt.show()
 
     return fig
-def saveFW(coef,classifier, analysis, task, sub):
+def saveFW(coef):
     #convert to 2d symmetrical matrix
     nrois=333
     ds=np.zeros((nrois, nrois))
@@ -142,7 +143,8 @@ def saveFW(coef,classifier, analysis, task, sub):
             else:
                 position=position+1
     df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
-    df.to_csv(outDir+"results/"+classifier+"/fw/" +analysis+ "/" +task+ "_" +sub+ ".csv")
+    return df
+    #df.to_csv(outDir+"results/"+classifier+"/fw/" +analysis+ "/" +task+ "_" +sub+ ".csv")
 
     #you'll have to specify that it is a tuple pd.read_csv('test.csv',index_col=[0,1])
 
@@ -171,37 +173,11 @@ def fwFolds(folds, classifier, analysis, task, sub):
 
 
 
+
 # In[1]:
 
 
-"""
-import reshape
-import pandas as pd
-import numpy as np
-from sklearn.svm import LinearSVC
-#Load task FC
-taskFC=reshape.matFiles('/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/MSC05_parcel_corrmat.mat')
-#Load rest
-restFC=reshape.matFiles('/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/MSC05_parcel_corrmat.mat')
-#Create a training dataset targets 1/0 ==task/rest, chunk=#days
-x_train=np.concatenate((taskFC, restFC))
-taskSize=taskFC.shape[0]
-restSize=restFC.shape[0]
-t = np.ones(taskSize, dtype = int)
-r=np.zeros(restSize, dtype=int)
-y_train = np.concatenate((t,r))
 
-svm = LinearSVC()
-svm.fit(x_train, y_train)
-coef = svm.coef_
-#convert to 2d symmetrical matrix
-#nrois=333
-#ds=np.zeros((nrois, nrois))
-#ds[np.triu_indices(ds.shape[0], k = 1)] = coef
-#ds = ds + ds.T
-#Parcel_params = loadParcelParams('Gordon333','/Users/aporter1350/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
-saveFW(coef,'DS', 'test','foo')
-"""
 
 
 # In[ ]:

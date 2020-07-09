@@ -162,6 +162,57 @@ def subBlock(df='path'):
 
 
 
+def featFiles(df='path',feat=100):
+    #Consistent parameters to use for editing datasets
+    nrois=333
+    #Load FC file
+    fileFC=scipy.io.loadmat(df)
+    #Convert to numpy array
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    #Replace nans and infs with zero
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    #Index upper triangle of matrix
+    mask=np.triu_indices(nrois,1)
+    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    count=0
+    #Loop through all 10 days to reshape correlations into linear form
+    for sess in range(nsess):
+        tmp=fileFC[:,:,sess]
+        ds[count]=tmp[mask]
+        count=count+1
+
+    featDS=np.empty((nsess, feat))
+    for i in range(nsess):
+        f=np.random.choice(ds[i], feat, replace=False)
+        featDS[i]=f
+    return featDS
+
+def limFeats(df='path', feat=100):
+    #Consistent parameters to use for editing datasets
+    nrois=333
+    #Load FC file
+    fileFC=scipy.io.loadmat(df)
+    #Convert to numpy array
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    #Replace nans and infs with zero
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    #Index upper triangle of matrix
+    mask=np.triu_indices(nrois,1)
+    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    count=0
+    #Loop through all 10 days to reshape correlations into linear form
+    for sess in range(nsess):
+        tmp=fileFC[:,:,sess]
+        ds[count]=tmp[mask]
+        count=count+1
+
+    featDS=np.empty((nsess, feat))
+    for i in range(nsess):
+        f=ds[i][:feat]
+        featDS[i]=f
+    return featDS
 # In[ ]:
 
 

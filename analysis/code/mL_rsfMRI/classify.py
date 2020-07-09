@@ -46,6 +46,7 @@ to run. DS--different subject same task; SS--same subject different task;
 BS--different subject different task. Each analysis will concatenate across
 subjects and make a dataframe. If FW is true will collect all necessary feature weights and plot or save then
 into the appropriate format. """
+
 def run_prediction(classifier, analysis):
     if analysis=='CV':
         classifyCV(classifier, analysis)
@@ -67,10 +68,10 @@ def classifyDS(classifier, analysis):
         score=model(classifier, analysis, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
         acc_scores_per_task.append(score)
     dfDS['acc']=acc_scores_per_task
-    results.plotACC(dfDS, classifier, analysis)
-    results.statsACC(dfDS, classifier, analysis)
-    results.boxACC(dfDS, classifier, analysis)
     dfDS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    #results.plotACC(dfDS, classifier, analysis)
+    #results.statsACC(dfDS, classifier, analysis)
+    #results.boxACC(dfDS, classifier, analysis)
 def classifySS(classifier,analysis):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(SSvars, columns=['sub','task'])
@@ -81,11 +82,11 @@ def classifySS(classifier,analysis):
         score=model(classifier, analysis, train_sub=row['sub'], test_sub=row['sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfSS['acc']=acc_scores_per_task
-    results.plotACC(dfSS, classifier, analysis)
-    results.statsACC(dfSS, classifier, analysis)
-    results.boxACC(dfSS, classifier, analysis)
     #save accuracy
     dfSS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    #results.plotACC(dfSS, classifier, analysis)
+    #results.statsACC(dfSS, classifier, analysis)
+    #results.boxACC(dfSS, classifier, analysis)
 def classifyBS(classifier, analysis):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(BSvars, columns=['sub','task'])
@@ -96,13 +97,11 @@ def classifyBS(classifier, analysis):
         score=model(classifier, analysis, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfBS['acc']=acc_scores_per_task
-    results.plotACC(dfBS, classifier, analysis)
-    results.statsACC(dfBS, classifier, analysis)
-    results.boxACC(dfBS, classifier, analysis)
     #save accuracy
     dfBS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
-
-
+    #results.plotACC(dfBS, classifier, analysis)
+    #results.statsACC(dfBS, classifier, analysis)
+    #results.boxACC(dfBS, classifier, analysis)
 def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
     if classifier=='SVC':
         clf=LinearSVC()
@@ -150,15 +149,16 @@ def classifyCV(classifier, analysis):
     #acc per fold per sub
         tmp_df=pd.DataFrame({'sub':subList, task:acc_scores_per_task}).set_index('sub')
         avg_CV.append(tmp_df)
-        cvTable=pd.concat(cvTable, axis=1)
+    cvTable=pd.concat(cvTable, axis=1)
     #saving cv per folds if debugging
-        cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/cvTable_folds.csv', index=False)
+    cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/cvTable_folds.csv')
     #average acc per sub per tasks
     df=pd.concat(avg_CV, axis=1)
-    results.plotACC(df, classifier, analysis)
-    results.statsACC(df, classifier, analysis)
-    results.boxACC(df, classifier, analysis)
-    df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
+    df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    #results.plotACC(df, classifier, analysis)
+    #results.statsACC(df, classifier, analysis)
+    #results.boxACC(df, classifier, analysis)
+
 
 def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
     loo = LeaveOneOut()
