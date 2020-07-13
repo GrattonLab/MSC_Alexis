@@ -11,25 +11,26 @@ import results
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/subNetwork/'
+outDir = thisDir + 'output/mL/'
 
 #Subjects and tasks
 taskList=['mixed', 'motor','mem']
 #taskList=['pres1', 'pres2','pres3']
-#subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
-subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
+subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
+#subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
 def boxACC(df, classifier, analysis):
     if analysis=='CV':
         print('cross validation boxplots')
-        df= pd.melt(df, value_vars=['mixed','motor','mem'], var_name='task', value_name='acc')
+        #df= pd.melt(df, value_vars=['mixed','motor','mem'], var_name='task', value_name='acc')
         #df.drop('sub', axis=1, inplace=True)
         plt.figure(figsize=(15,8))
-        ax=sns.boxplot(x='task', y='acc', data=df)
+        sns.set_context("talk")
+        ax=sns.barplot(x='task', y='acc', data=df)
         ax.set_title('Cross Validation')
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
         #fig=ax.get_figure()
-        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/boxplot.png', bbox_inches='tight')
+        plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/barplot.png', bbox_inches='tight')
     elif analysis=='SS':
         print('same sub boxplots')
         #df.drop(['sub'], axis=1, inplace=True)
@@ -46,10 +47,10 @@ def boxACC(df, classifier, analysis):
     elif analysis=='DS':
         #df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
         plt.figure(figsize=(8,6))
-        sns.set_context("talk")
+
         ax=sns.boxplot(x='task', y='acc', data=df)
         ax.axhline(.50, ls='--', color='r')
-        ax.set_title(classifier)
+        ax.set_title('Different Subject Same Task')
         ax.set_xlabel('Test Task')
         ax.set_ylabel('Accuracy')
         #fig=ax.get_figure()
@@ -98,10 +99,15 @@ def plotACC(df, classifier, analysis):
             task_df.drop(columns=['task'], inplace=True)
             task_df=task_df.pivot(index='test_sub', columns='train_sub', values='acc')
             plt.figure()
-            ax=sns.heatmap(task_df, annot=True, vmin=.5, vmax=1)
-            ax.set_title('Testing ' + task)
-            ax.set_xlabel('Training Variables')
-            ax.set_ylabel('Testing Variables')
+            ax=sns.heatmap(task_df, annot=True, vmin=0, vmax=1, cmap="coolwarm", center=.55)
+            if task=='mixed':
+                ax.set_title('Mixed')
+            elif task=='motor':
+                ax.set_title('Motor')
+            else:
+                ax.set_title('Memory')
+            ax.set_xlabel('Training')
+            ax.set_ylabel('Testing')
             #fig=ax.get_figure()
             plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/'+task+'_heatmap.png', bbox_inches='tight')
     elif analysis =='BS':
@@ -126,13 +132,13 @@ def plotACC(df, classifier, analysis):
                     plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/train_'+train_task+'_test_'+test_task+'_heatmap.png', bbox_inches='tight')
     else:
         print('skipping heatmaps')
-def statsACC(df, classifier, analysis, network):
+def statsACC(df, classifier, analysis):
     if analysis=='CV':
         print('cross validation stats')
         mu=df.mean()
         sd=df.std()
         stats=pd.DataFrame({'Mean':mu, 'Std':sd})
-        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='SS':
         print('same sub stats')
         df.drop(['sub'], axis=1, inplace=True)
@@ -141,7 +147,7 @@ def statsACC(df, classifier, analysis, network):
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
-        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='DS':
         print('diff sub stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
@@ -149,7 +155,7 @@ def statsACC(df, classifier, analysis, network):
         stats.rename(columns={'acc':'Mean'}, inplace=True)
         sd=df.groupby('task').std()
         stats['Std']=sd['acc']
-        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     elif analysis=='BS':
         print('diff sub diff task stats')
         df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
@@ -158,7 +164,7 @@ def statsACC(df, classifier, analysis, network):
         sd=df.groupby(['test_task', 'train_task']).std()
         stats['Std']=sd['acc']
         stats.reset_index(inplace=True)
-        stats.to_csv(outDir+network+'/results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
+        stats.to_csv(outDir+'results/' +classifier+'/acc/'+analysis+'/stats.csv', index=True)
     else:
         print('skipping stats')
 
@@ -218,7 +224,6 @@ def ss_boxplot():
     ridge['Analysis']='Ridge'
     classifiers=[SVC, log, ridge]
     result = pd.concat(classifiers)
-    result['Train.Test']=result['train_task']+'.'+result['test_task']
     sns.set_context("talk")
     plt.figure(figsize=(28,8))
     colors = ["#0000CC", "#69A7EF","#FD8A07","#FCCF8C","#21B056","#84E5A8"]
@@ -253,3 +258,33 @@ def bs_boxplot():
     ax.set_title('Different Subject Different Task Across Models', fontsize=30)
     ax.legend(title='Train.Test',loc='lower left')
     plt.savefig(outDir +'subBlock/results/bs_boxplot.png', bbox_inches='tight')
+
+def cv_reshapeFolds(classifier):
+    finalDF=pd.DataFrame()
+    for i in taskList:
+        tmp=pd.read_csv(outDir+'results/ridge/acc/CV/'+i+'_cvTable_folds.csv')
+        tmp= pd.melt(tmp, value_vars=subList, var_name='sub', value_name='acc')
+        tmp['task']=i
+        finalDF = finalDF.append(tmp)
+    finalDF.reset_index(inplace=True)
+    finalDF.drop(columns='index', inplace=True)
+    finalDF.set_index('task', inplace=True)
+    finalDF.rename(index={'mixed':'Mixed','motor':'Motor','mem':'Memory'}, inplace=True)
+    finalDF.reset_index(inplace=True)
+    finalDF.to_csv(outDir+'results/' +classifier+'/acc/CV/reformedFolds.csv', index=False)
+
+
+def heatmaps(classifier, analysis):
+    sns.set_context("talk")
+    df=pd.read_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/stats.csv')
+    df=df.pivot(index='test_task', columns='train_task', values='Mean')
+    df.rename(columns={'mem':'Memory','mixed':'Mixed','motor':'Motor'},index={'mem':'Memory','mixed':'Mixed','motor':'Motor'}, inplace=True)
+    plt.figure(figsize=(10,8))
+    ax=sns.heatmap(df, annot=True, vmin=0, vmax=1, cmap="RdBu_r", center=.5)
+    if analysis=='SS':
+        ax.set_title('Same Subject Different Task')
+    else:
+        ax.set_title('Different Subject Different Task')
+    ax.set_xlabel('Train')
+    ax.set_ylabel('Test')
+    plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/task_heatmap.png', bbox_inches='tight')
