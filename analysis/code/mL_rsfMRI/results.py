@@ -47,7 +47,7 @@ def boxACC(df, classifier, analysis):
     elif analysis=='DS':
         #df.drop(['train_sub', 'test_sub'], axis=1, inplace=True)
         plt.figure(figsize=(8,6))
-        sns.set_context("talk")
+
         ax=sns.boxplot(x='task', y='acc', data=df)
         ax.axhline(.50, ls='--', color='r')
         ax.set_title('Different Subject Same Task')
@@ -99,7 +99,7 @@ def plotACC(df, classifier, analysis):
             task_df.drop(columns=['task'], inplace=True)
             task_df=task_df.pivot(index='test_sub', columns='train_sub', values='acc')
             plt.figure()
-            ax=sns.heatmap(task_df, annot=True, vmin=.5, vmax=1)
+            ax=sns.heatmap(task_df, annot=True, vmin=0, vmax=1, cmap="coolwarm", center=.55)
             if task=='mixed':
                 ax.set_title('Mixed')
             elif task=='motor':
@@ -280,7 +280,7 @@ def heatmaps(classifier, analysis):
     df=df.pivot(index='test_task', columns='train_task', values='Mean')
     df.rename(columns={'mem':'Memory','mixed':'Mixed','motor':'Motor'},index={'mem':'Memory','mixed':'Mixed','motor':'Motor'}, inplace=True)
     plt.figure(figsize=(10,8))
-    ax=sns.heatmap(df, annot=True, vmin=.5, vmax=1)
+    ax=sns.heatmap(df, annot=True, vmin=0, vmax=1, cmap="RdBu_r", center=.5)
     if analysis=='SS':
         ax.set_title('Same Subject Different Task')
     else:
