@@ -213,6 +213,17 @@ def limFeats(df='path', feat=100):
         f=ds[i][:feat]
         featDS[i]=f
     return featDS
+
+def randFeats(df, idx):
+    data=matFiles(df)
+    feat=idx.shape[0]
+    nsess=data.shape[0]
+    featDS=np.empty((nsess, feat))
+    for sess in range(nsess):
+        f=data[sess][idx]
+        featDS[sess]=f
+    return featDS
+
 # In[ ]:
 
 

@@ -68,7 +68,7 @@ def classifyDS(classifier, analysis):
         score=model(classifier, analysis, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
         acc_scores_per_task.append(score)
     dfDS['acc']=acc_scores_per_task
-    dfDS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    dfDS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #results.plotACC(dfDS, classifier, analysis)
     #results.statsACC(dfDS, classifier, analysis)
     #results.boxACC(dfDS, classifier, analysis)
@@ -83,7 +83,7 @@ def classifySS(classifier,analysis):
         acc_scores_per_task.append(score)
     dfSS['acc']=acc_scores_per_task
     #save accuracy
-    dfSS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    dfSS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #results.plotACC(dfSS, classifier, analysis)
     #results.statsACC(dfSS, classifier, analysis)
     #results.boxACC(dfSS, classifier, analysis)
@@ -98,7 +98,7 @@ def classifyBS(classifier, analysis):
         acc_scores_per_task.append(score)
     dfBS['acc']=acc_scores_per_task
     #save accuracy
-    dfBS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    dfBS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #results.plotACC(dfBS, classifier, analysis)
     #results.statsACC(dfBS, classifier, analysis)
     #results.boxACC(dfBS, classifier, analysis)
@@ -149,12 +149,12 @@ def classifyCV(classifier, analysis):
     #acc per fold per sub
         tmp_df=pd.DataFrame({'sub':subList, task:acc_scores_per_task}).set_index('sub')
         avg_CV.append(tmp_df)
-    cvTable=pd.concat(cvTable, axis=1)
+        cvTable=pd.concat(cvTable, axis=1)
     #saving cv per folds if debugging
-    cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/cvTable_folds.csv')
+        cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/'+task+'_cvTable_folds.csv')
     #average acc per sub per tasks
     df=pd.concat(avg_CV, axis=1)
-    df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv', index=False)
+    df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #results.plotACC(df, classifier, analysis)
     #results.statsACC(df, classifier, analysis)
     #results.boxACC(df, classifier, analysis)
