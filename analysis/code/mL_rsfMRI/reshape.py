@@ -56,7 +56,7 @@ def subNets(df='path', networkLabel='networklabel', otherNets=None):
  'pmn',
  'pon'] """
  #roi count for building arrays
-    netRoi=dict([('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 484),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
+    netRoi=dict([('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 494),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
     fileFC=scipy.io.loadmat(df)
     fileFC=np.array(fileFC['parcel_corrmat'])
     fileFC=np.nan_to_num(fileFC)

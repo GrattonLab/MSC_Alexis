@@ -272,7 +272,7 @@ def cv_reshapeFolds(classifier):
     finalDF.rename(index={'mixed':'Mixed','motor':'Motor','mem':'Memory'}, inplace=True)
     finalDF.reset_index(inplace=True)
     finalDF.to_csv(outDir+'results/' +classifier+'/acc/CV/reformedFolds.csv', index=False)
-
+    return finalDF
 
 def heatmaps(classifier, analysis):
     sns.set_context("talk")

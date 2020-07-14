@@ -111,17 +111,26 @@ def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
         clf=RidgeClassifier()
     else:
         print('Error: You didnt specify what classifier')
+    df=pd.DataFrame()
     taskFC=reshape.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
     restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
     #if your subs are the same
     if train_sub==test_sub:
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-        ACCscores=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
+        total_score, acc_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
+        df[train_sub]=acc_score
+        df['train']=train_task
+        df['test']=test_task
+        df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_task+test_task+train_sub+'.csv')
     else:
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
-        ACCscores=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
-    return ACCscores
+        total_score, acc_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
+        df[test_task]=acc_score
+        df['train']=train_sub
+        df['test']=test_sub
+        df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+test_task+'.csv')
+    return total_score
 #Calculate acc of cross validation within sub within task
 def classifyCV(classifier, analysis):
     avg_CV=[]
@@ -224,4 +233,5 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
         df['outer_fold']=acc_score
         total_score=df['outer_fold'].mean()
 
-    return total_score
+    return total_score, acc_score
+    #return df
