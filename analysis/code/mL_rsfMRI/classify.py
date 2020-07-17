@@ -126,10 +126,12 @@ def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
         total_score, acc_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
-        df[test_task]=acc_score
+        df['acc']=acc_score
         df['train']=train_sub
         df['test']=test_sub
-        df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+test_task+'.csv')
+        df['train_task']=train_task
+        df['test_task']=test_task
+        df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+train_task+test_task+'.csv')
     return total_score
 #Calculate acc of cross validation within sub within task
 def classifyCV(classifier, analysis):
