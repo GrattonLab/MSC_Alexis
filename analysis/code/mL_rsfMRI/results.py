@@ -280,11 +280,11 @@ def heatmaps(classifier, analysis):
     df=df.pivot(index='test_task', columns='train_task', values='Mean')
     df.rename(columns={'mem':'Memory','mixed':'Mixed','motor':'Motor'},index={'mem':'Memory','mixed':'Mixed','motor':'Motor'}, inplace=True)
     plt.figure(figsize=(10,8))
-    ax=sns.heatmap(df, annot=True, vmin=0, vmax=1, cmap="RdBu_r", center=.5)
+    ax=sns.heatmap(df, annot=True, vmin=0.5, vmax=1, cmap="RdBu_r")
     if analysis=='SS':
-        ax.set_title('Same Subject Different Task')
+        ax.set_title('Same Subject')
     else:
-        ax.set_title('Different Subject Different Task')
+        ax.set_title('Different Subject')
     ax.set_xlabel('Train')
     ax.set_ylabel('Test')
     plt.savefig(outDir +'images/'+classifier+'/acc/'+analysis+'/task_heatmap.png', bbox_inches='tight')
