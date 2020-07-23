@@ -99,7 +99,7 @@ def plotACC(df, classifier, analysis):
             task_df.drop(columns=['task'], inplace=True)
             task_df=task_df.pivot(index='test_sub', columns='train_sub', values='acc')
             plt.figure()
-            ax=sns.heatmap(task_df, annot=True, vmin=0, vmax=1, cmap="coolwarm", center=.55)
+            ax=sns.heatmap(task_df, annot=True, vmin=.5, vmax=1, cmap="coolwarm")
             if task=='mixed':
                 ax.set_title('Mixed')
             elif task=='motor':
