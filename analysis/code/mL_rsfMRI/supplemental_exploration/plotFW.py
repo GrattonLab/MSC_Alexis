@@ -27,7 +27,7 @@ def feature_plots(coef, classifier='which', analysis='type', train_task='task', 
     #vmin=np.amin(ds)
     #vmax=np.amax(ds)
     fig = figure_corrmat(ds,Parcel_params, clims=(-.002,.002))
-    fig.savefig(outDir+"images/"+classifier+"/fw/" +analysis+ "/" +task+ "_" +sub+ ".png", bbox_inches='tight')
+    fig.savefig(outDir+"images/"+classifier+"/fw/" +analysis+ "/" +train_task+ "_" +train_sub+ ".png", bbox_inches='tight')
 
 def loadParcelParams(roiset,datadir):
     """ This function loads information about the ROIs and networks.
