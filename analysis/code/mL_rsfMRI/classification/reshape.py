@@ -10,7 +10,7 @@ import sys
 import os
 import pandas as pd
 import scipy.io
-
+import matplotlib.pyplot as plt
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 def matFiles(df='path'):
     """
@@ -229,21 +229,6 @@ def randFeats(df, idx):
         featDS[sess]=f
     return featDS
 
-
-def feature_plots(coef, classifier='which', analysis='type', train_task='task', train_sub='i'):
-    #convert to 2d symmetrical matrix
-    nrois=333
-    ds=np.zeros((nrois, nrois))
-    ds[np.triu_indices(ds.shape[0], k = 1)] = coef
-    ds = ds + ds.T
-    #get atlas you want to use
-    Parcel_params = loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
-    #make pretty fig
-    #vmin=np.amin(ds)
-    #vmax=np.amax(ds)
-    fig = figure_corrmat(ds,Parcel_params, clims=(-.002,.002))
-    fig.savefig(outDir+"images/"+classifier+"/fw/" +analysis+ "/" +task+ "_" +sub+ ".png", bbox_inches='tight')
-
 def loadParcelParams(roiset,datadir):
     """ This function loads information about the ROIs and networks.
     For now, this is only set up to work with 333 Gordon 2014 Cerebral Cortex regions
@@ -333,61 +318,6 @@ def figure_corrmat(corrmat,Parcel_params, clims=(-1,1)):
     plt.show()
 
     return fig
-def saveFW(coef):
-    #convert to 2d symmetrical matrix
-    nrois=333
-    ds=np.zeros((nrois, nrois))
-    ds[np.triu_indices(ds.shape[0], k = 1)] = coef
-    ds = ds + ds.T
-    Parcel_params = loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
-    roi_sort = np.squeeze(Parcel_params['roi_sort'])
-    #rearrange roi's to be together
-    corrmat=ds[roi_sort,:][:,roi_sort]
-    nrois=list(range(333))
-    nets=[]
-    position=0
-    count=0
-    networks=Parcel_params['networks']
-    t=Parcel_params['transitions']
-    #have to add extra value otherwise error
-    transitions=np.append(t,333)
-    while count<333:
-            if count<=transitions[position]:
-                nets.append(networks[position])
-                count=count+1
-            else:
-                position=position+1
-    df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
-    return df
-    #df.to_csv(outDir+"results/"+classifier+"/fw/" +analysis+ "/" +task+ "_" +sub+ ".csv")
-
-    #you'll have to specify that it is a tuple pd.read_csv('test.csv',index_col=[0,1])
-
-#standard deviation of feature weights between folds
-#did not initialize for classify.py since this is for debugging
-def fwFolds(folds, classifier, analysis, task, sub):
-    #concate into useable form
-    fw=np.empty([10,55278])
-    count=0
-    for model in folds['estimator']:
-        i=model.coef_
-        fw[count]=i
-        count=count+1
-    fwSD=np.std(fw, axis=0)
-    nrois=333
-    ds=np.zeros((nrois, nrois))
-    ds[np.triu_indices(ds.shape[0], k = 1)] = fwSD
-    ds = ds + ds.T
-    #get atlas you want to use
-    Parcel_params = loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
-    #make pretty fig
-    vmin=np.amin(ds)
-    vmax=np.amax(ds)
-    fig = figure_corrmat(ds,Parcel_params, clims=(0, .0002))
-    fig.savefig(outDir+"images/"+classifier+"/fw/" +analysis+ "/fwSD_Folds/" +task+ "_" +sub+ ".png", bbox_inches='tight')
-
-
-
 
 # In[ ]:
 
