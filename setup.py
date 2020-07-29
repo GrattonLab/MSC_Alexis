@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="classification",
+    name="MSC_Alexis",
     version="0.0.1",
     author="Alexis Porter",
     author_email="alexis.porter1313@gmail.com",

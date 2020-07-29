@@ -1,0 +1,28 @@
+Metadata-Version: 2.1
+Name: MSC-Alexis
+Version: 0.0.1
+Summary: Machine learning to predict states
+Home-page: https://github.com/aporter1350/MSC_Alexis
+Author: Alexis Porter
+Author-email: alexis.porter1313@gmail.com
+License: UNKNOWN
+Description: # MSCmL
+        
+        This project used computational models to predict task and rest state functional connectivity measures within and between subjects from the Midnight Scan Club
+        
+        ## Contributing
+        
+        We welcome contributions from the community. Please create a forks of the project on Github and issue a pull request to propose your changes. We strongly encourage creating an issue before starting work on major changes, to discuss these changes first.
+        
+        ## Getting help
+        
+        Please post issues on the project [Github page](https://github.com/aporter1350/MSC_Alexis)
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown

@@ -1,0 +1,7 @@
+README.md
+setup.py
+MSC_Alexis.egg-info/PKG-INFO
+MSC_Alexis.egg-info/SOURCES.txt
+MSC_Alexis.egg-info/dependency_links.txt
+MSC_Alexis.egg-info/requires.txt
+MSC_Alexis.egg-info/top_level.txt
