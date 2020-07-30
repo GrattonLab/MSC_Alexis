@@ -21,5 +21,5 @@ setup(
         "Topic :: Scientific/Engineering"
     ],
     python_requires='>=3.5',
-    install_requires=["numpy", "scipy", "sklearn", "os", "sys", "pandas","seaborn"]
+    install_requires=["numpy", "scipy", "sklearn", "pandas","seaborn"]
 )
