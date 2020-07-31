@@ -16,12 +16,6 @@ filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/frames';
     restFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/rest/' sub '_parcel_timecourse.mat'];
     restFC=load(restFile);
     %loop through all days
-    %samples = 10;
-    %motor=[];
-    %mem=[];
-    %rest=[];
-    %mixed=[];
-    
     %memory
     nsamples = size(memFC.parcel_time, 2);
     parcel_corrmat=[];

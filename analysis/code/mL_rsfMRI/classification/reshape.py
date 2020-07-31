@@ -9,7 +9,6 @@ import numpy as np
 import sys
 import os
 import pandas as pd
-import scipy.io
 import matplotlib.pyplot as plt
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 def matFiles(df='path'):
@@ -92,7 +91,7 @@ def subNets(df='path', networkLabel='networklabel', otherNets=None):
     dsNet : Array of task or rest FC containing only subnetworks
     """
  #roi count for building arrays
-    netRoi=dict([('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 494),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
+    netRoi=dict([('unassign',14808),('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 494),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
     fileFC=scipy.io.loadmat(df)
     fileFC=np.array(fileFC['parcel_corrmat'])
     fileFC=np.nan_to_num(fileFC)
