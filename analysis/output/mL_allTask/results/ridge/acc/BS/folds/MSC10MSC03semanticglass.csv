@@ -1,0 +1,11 @@
+,acc,train,test,train_task,test_task
+0,0.6,MSC10,MSC03,semantic,glass
+1,0.6,MSC10,MSC03,semantic,glass
+2,0.55,MSC10,MSC03,semantic,glass
+3,0.5,MSC10,MSC03,semantic,glass
+4,0.55,MSC10,MSC03,semantic,glass
+5,0.6,MSC10,MSC03,semantic,glass
+6,0.6,MSC10,MSC03,semantic,glass
+7,0.6,MSC10,MSC03,semantic,glass
+8,0.6,MSC10,MSC03,semantic,glass
+9,0.55,MSC10,MSC03,semantic,glass

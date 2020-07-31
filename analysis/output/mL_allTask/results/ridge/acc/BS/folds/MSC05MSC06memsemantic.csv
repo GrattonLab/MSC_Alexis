@@ -1,0 +1,11 @@
+,acc,train,test,train_task,test_task
+0,0.8,MSC05,MSC06,mem,semantic
+1,0.8,MSC05,MSC06,mem,semantic
+2,0.8,MSC05,MSC06,mem,semantic
+3,0.8,MSC05,MSC06,mem,semantic
+4,0.8,MSC05,MSC06,mem,semantic
+5,0.85,MSC05,MSC06,mem,semantic
+6,0.85,MSC05,MSC06,mem,semantic
+7,0.85,MSC05,MSC06,mem,semantic
+8,0.85,MSC05,MSC06,mem,semantic
+9,0.8,MSC05,MSC06,mem,semantic

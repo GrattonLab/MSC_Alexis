@@ -1,0 +1,11 @@
+,acc,train,test,train_task,test_task
+0,0.85,MSC04,MSC10,glass,motor
+1,0.75,MSC04,MSC10,glass,motor
+2,0.75,MSC04,MSC10,glass,motor
+3,0.75,MSC04,MSC10,glass,motor
+4,0.75,MSC04,MSC10,glass,motor
+5,0.8,MSC04,MSC10,glass,motor
+6,0.75,MSC04,MSC10,glass,motor
+7,0.85,MSC04,MSC10,glass,motor
+8,0.75,MSC04,MSC10,glass,motor
+9,0.9,MSC04,MSC10,glass,motor
