@@ -10,13 +10,13 @@ import os
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 #using less conservative fc matrices
-dataDir = thisDir + 'data/mvpa_data/tmask_all/'
-outDir = thisDir + 'output/mLmax/'
-#dataDir = thisDir + 'data/mvpa_data/'
-#outDir = thisDir + 'output/mL/'
+#outDir = thisDir + 'output/mLmax/'
+
+outDir = thisDir + 'output/mL_allTask/'
 
 #Subjects and tasks
-taskList=['mixed', 'motor','mem']
+#taskList=['mixed', 'motor','mem']
+taskList=['glass','semantic', 'motor','mem']
 #taskList=['pres1', 'pres2','pres3']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
@@ -272,9 +272,10 @@ def cv_reshapeFolds(classifier):
     finalDF.drop(columns='index', inplace=True)
     finalDF.set_index('task', inplace=True)
     finalDF.rename(index={'mixed':'Mixed','motor':'Motor','mem':'Memory'}, inplace=True)
+    #finalDF.rename(index={'glass':'Glass','semantic':'Semantic','motor':'Motor','mem':'Memory'}, inplace=True)
     finalDF.reset_index(inplace=True)
     finalDF.to_csv(outDir+'results/' +classifier+'/acc/CV/reformedFolds.csv', index=False)
-    return finalDF
+    #return finalDF
 
 def heatmaps(classifier, analysis):
     sns.set_context("talk")

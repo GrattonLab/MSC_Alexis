@@ -25,13 +25,14 @@ warnings.filterwarnings("ignore")
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 #using less conservative fc matrices
-dataDir = thisDir + 'data/mvpa_data/tmask_all/'
-outDir = thisDir + 'output/mLmax/'
+#dataDir = thisDir + 'data/mvpa_data/tmask_all/'
+#outDir = thisDir + 'output/mLmax/'
 
-#dataDir = thisDir + 'data/mvpa_data/'
-#outDir = thisDir + 'output/mL/'
+dataDir = thisDir + 'data/mvpa_data/'
+outDir = thisDir + 'output/mL/'
 # Subjects and tasks
 taskList=['mixed', 'motor','mem']
+#taskList=['glass','semantic', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
 #all possible combinations of subs and tasks
@@ -82,7 +83,7 @@ def classifyDS(classifier, analysis):
     dfDS['acc']=acc_scores_per_task
     dfDS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #classification.plotACC(dfDS, classifier, analysis)
-    classification.statsACC(dfDS, classifier, analysis)
+    #classification.statsACC(dfDS, classifier, analysis)
     #classification.boxACC(dfDS, classifier, analysis)
 def classifySS(classifier,analysis):
     """
@@ -113,7 +114,7 @@ def classifySS(classifier,analysis):
     #save accuracy
     dfSS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #classification.plotACC(dfSS, classifier, analysis)
-    classification.statsACC(dfSS, classifier, analysis)
+    #classification.statsACC(dfSS, classifier, analysis)
     #classification.boxACC(dfSS, classifier, analysis)
 def classifyBS(classifier, analysis):
     """
@@ -144,7 +145,7 @@ def classifyBS(classifier, analysis):
     #save accuracy
     dfBS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #classification.plotACC(dfBS, classifier, analysis)
-    classification.statsACC(dfBS, classifier, analysis)
+    #classification.statsACC(dfBS, classifier, analysis)
     #classification.boxACC(dfBS, classifier, analysis)
 def classifyCV(classifier, analysis):
     """
@@ -195,7 +196,7 @@ def classifyCV(classifier, analysis):
     df=pd.concat(avg_CV, axis=1)
     df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
     #classification.plotACC(df, classifier, analysis)
-    classification.statsACC(df, classifier, analysis)
+    #classification.statsACC(df, classifier, analysis)
     #classification.boxACC(df, classifier, analysis)
 def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
     """
