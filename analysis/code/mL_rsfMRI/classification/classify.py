@@ -251,7 +251,11 @@ def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
         df['test']=test_sub
         df['train_task']=train_task
         df['test_task']=test_task
-        df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+train_task+test_task+'.csv')
+        #DS
+        if train_task==test_task:
+            df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+train_task+'.csv')
+        else:
+            df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+train_task+test_task+'.csv')
     return total_score
 #Calculate acc of cross validation within sub within task
 def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
