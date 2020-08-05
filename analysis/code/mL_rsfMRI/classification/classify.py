@@ -25,11 +25,11 @@ warnings.filterwarnings("ignore")
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 #using less conservative fc matrices
-#dataDir = thisDir + 'data/mvpa_data/tmask_all/'
-#outDir = thisDir + 'output/mLmax/'
+dataDir = thisDir + 'data/mvpa_data/tmask_min/'
+outDir = thisDir + 'output/mLmin/'
 
-dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/mL/'
+#dataDir = thisDir + 'data/mvpa_data/'
+#outDir = thisDir + 'output/mL/'
 # Subjects and tasks
 taskList=['mixed', 'motor','mem']
 #taskList=['glass','semantic', 'motor','mem']

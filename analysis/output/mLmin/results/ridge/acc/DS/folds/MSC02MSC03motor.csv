@@ -1,0 +1,11 @@
+,acc,train,test,train_task,test_task
+0,0.8,MSC02,MSC03,motor,motor
+1,0.6,MSC02,MSC03,motor,motor
+2,0.75,MSC02,MSC03,motor,motor
+3,0.9,MSC02,MSC03,motor,motor
+4,0.85,MSC02,MSC03,motor,motor
+5,0.65,MSC02,MSC03,motor,motor
+6,0.9,MSC02,MSC03,motor,motor
+7,0.85,MSC02,MSC03,motor,motor
+8,0.85,MSC02,MSC03,motor,motor
+9,0.65,MSC02,MSC03,motor,motor

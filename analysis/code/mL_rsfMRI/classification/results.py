@@ -11,12 +11,12 @@ import os
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 #using less conservative fc matrices
 #outDir = thisDir + 'output/mLmax/'
-
-outDir = thisDir + 'output/mL_allTask/'
+outDir = thisDir + 'output/mLmin/'
+#outDir = thisDir + 'output/mL_allTask/'
 
 #Subjects and tasks
-#taskList=['mixed', 'motor','mem']
-taskList=['glass','semantic', 'motor','mem']
+taskList=['mixed', 'motor','mem']
+#taskList=['glass','semantic', 'motor','mem']
 #taskList=['pres1', 'pres2','pres3']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #subList=['MSC01','MSC02','MSC04','MSC05','MSC10']

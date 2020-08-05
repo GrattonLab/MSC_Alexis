@@ -1,0 +1,11 @@
+,acc,train,test,train_task,test_task
+0,0.6,MSC04,MSC06,mem,mixed
+1,0.55,MSC04,MSC06,mem,mixed
+2,0.65,MSC04,MSC06,mem,mixed
+3,0.65,MSC04,MSC06,mem,mixed
+4,0.55,MSC04,MSC06,mem,mixed
+5,0.55,MSC04,MSC06,mem,mixed
+6,0.55,MSC04,MSC06,mem,mixed
+7,0.65,MSC04,MSC06,mem,mixed
+8,0.55,MSC04,MSC06,mem,mixed
+9,0.55,MSC04,MSC06,mem,mixed
