@@ -47,13 +47,11 @@ BSvars=list(itertools.product(list(subsComb),list(tasksComb)))
 
 
 """
-run_prediction initializes what type of analysis you would like to do
-and what classifier you would like to use. For now classifier options are svm:linear svm, logreg: logistic
-regression, and ridge:ridge regression. Analysis is the type of analysis you wanted
-to run. DS--different subject same task; SS--same subject different task;
-BS--different subject different task. Each analysis will concatenate across
-subjects and make a dataframe. If FW is true will collect all necessary feature weights and plot or save then
-into the appropriate format. """
+initializes what type of analysis you would like to do and what classifier you would like to use. For now classifier options
+are svm:linear svm, logreg: logistic regression, and ridge:ridge regression. Analysis is the type of analysis you wanted
+to run. DS--different subject same task; SS--same subject different task; BS--different subject different task.
+Each analysis will concatenate across subjects and make a dataframe.
+"""
 
 def classifyDS(classifier, analysis):
     """
