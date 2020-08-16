@@ -27,6 +27,7 @@ def matFiles(df='path'):
     nrois=333
     #Load FC file
     fileFC=scipy.io.loadmat(df)
+    
     #Convert to numpy array
     fileFC=np.array(fileFC['parcel_corrmat'])
     #Replace nans and infs with zero
