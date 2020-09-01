@@ -6,6 +6,7 @@
 
 subs={'MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07', 'MSC10'};
 for i=1:length(subs)
+    rest_thirds(subs{i})
     %tmask_all(subs{i})
-    change_frames(subs{i})
+    %change_frames(subs{i})
 end
