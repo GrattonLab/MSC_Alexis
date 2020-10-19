@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="MSC_Alexis",
-    version="0.0.3",
+    version="0.0.4",
     author="Alexis Porter",
     author_email="alexis.porter1313@gmail.com",
     description="Machine learning to predict states",

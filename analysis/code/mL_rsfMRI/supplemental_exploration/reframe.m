@@ -10,10 +10,24 @@ function parcel_corrmat=reframe(sub,frame,task)
         elseif round(size(task,1))<frame
             continue; 
         end 
-        %task_min=task(1:frames{f}, :);
-        %this will have to change to some combination of the two where its
-        %in chunks but randomely 
-        task_min=datasample(task,frame,'Replace',false);
+        %this will find out what the size of the time series is 
+        %randomly pick a number between 1 and the max size
+        %then if the starting point is too close to the max size
+        %it will go back to the beginning and take out the remaining frames
+        %this is both a combination of chunking and random sample
+        maxSize=round(size(task,1));
+        startingPoint=randi(maxSize);
+        if startingPoint+frame>maxSize
+            t1=task(startingPoint:maxSize,:);
+            tsize=maxSize-startingPoint;
+            fRemaining=frame-tsize-1;
+            t2=task(1:fRemaining,:);
+            task_min=[t1; t2];
+        else
+            task_min=task(startingPoint:frame+startingPoint,:);
+        end 
+        %complete random sampling
+        %task_min=datasample(task,frame,'Replace',false);
         t=corr(task_min);
         zt=atanh(t);
         parcel_corrmat=cat(3, parcel_corrmat, zt);
