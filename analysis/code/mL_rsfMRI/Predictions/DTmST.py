@@ -1,40 +1,31 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
+# In[ ]:
 
+
+#comparison Same sub same task - same sub diff task etc etc
+import reshape
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import KFold
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import RidgeClassifier
 import numpy as np
 import os
 import sys
 import pandas as pd
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_validate
-from sklearn import metrics
-import itertools
 import classification
-#import other python scripts for further anlaysis
-#import reshape
-#import results
+from sklearn.model_selection import cross_val_score
+import itertools
+import reshape
 import warnings
 warnings.filterwarnings("ignore")
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
-#using less conservative fc matrices
-#dataDir = thisDir + 'data/mvpa_data/tmask_min/'
-#outDir = thisDir + 'output/mLmin/'
+dataDir = thisDir + 'data/mvpa_data/'
+outDir = thisDir + 'output/results/permutation/'
 
-#dataDir = thisDir + 'data/mvpa_data/'
-#outDir = thisDir + 'output/mL/'
 # Subjects and tasks
-#taskList=['mixed', 'motor','mem']
 taskList=['glass','semantic', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
-#subList=['MSC01','MSC02','MSC04','MSC05','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 tasksComb=(list(itertools.permutations(taskList, 2)))
@@ -45,54 +36,59 @@ SSvars=list(itertools.product(list(subList),list(tasksComb)))
 #BS combination
 BSvars=list(itertools.product(list(subsComb),list(tasksComb)))
 
-
-"""
-initializes what type of analysis you would like to do and what classifier you would like to use. For now classifier options
-are svm:linear svm, logreg: logistic regression, and ridge:ridge regression. Analysis is the type of analysis you wanted
-to run. DS--different subject same task; SS--same subject different task; BS--different subject different task.
-Each analysis will concatenate across subjects and make a dataframe.
-"""
-
-def classifyDS(classifier, analysis):
+def DSmBS():
+    DSmBS_perms=pd.DataFrame()
+    for i in range(1000):
+        diff=classify_DSmBS()
+        DSmBS_perms=pd.concat([DSmBS_perms, diff])
+    DSmBS_perms.to_csv(outDir+'STmDT_DSmBS_acc.csv',index=False)
+def classify_DSmBS():
+    BS=classifyBS()
+    DS=classifyDS()
+    diff_task=BS.merge(DS,how='left',on=['train_task','train_sub','test_sub'],suffixes=('','_DS'))
+    diff_task['diff']=diff_task['acc_DS']-diff_task['acc']
+    #diff sub same task - diff sub diff task
+    STmDT=diff_task[['train_task','test_task','diff']]
+    #take average
+    diff=STmDT.groupby(['train_task','test_task']).mean()
+    diff.reset_index(inplace=True)
+    return diff
+def CVmSS():
+    CVmSS_perms=pd.DataFrame()
+    for i in range(1000):
+        dfSS=classifySS()
+        #take average
+        CVmSS_perms=pd.concat([CVmSS_perms,dfSS])
+    CVmSS_perms.to_csv(outDir+'STmDT_CVmSS_acc.csv',index=False)
+def classifyDS():
     """
     Classifying different subjects (DS) along the same task
 
     Parameters
     -------------
-    classifier : str
-            The statistical method used for classification
-    analysis : str
-            The type of analysis to be conducted
 
     Returns
     -------------
     dfDS : DataFrame
         Dataframe consisting of average accuracy across all subjects
-
     """
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(DSvars, columns=['sub','task'])
     dfDS=pd.DataFrame()
     dfDS[['train_sub','test_sub']]=pd.DataFrame(tmp_df['sub'].tolist())
-    dfDS['task']=tmp_df['task']
+    dfDS['train_task']=tmp_df['task']
     for index, row in dfDS.iterrows():
-        score=model(classifier, analysis, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
+        score=model('DS', train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['train_task'])
         acc_scores_per_task.append(score)
     dfDS['acc']=acc_scores_per_task
-    dfDS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
-    #classification.plotACC(dfDS, classifier, analysis)
-    #classification.statsACC(dfDS, classifier, analysis)
-    #classification.boxACC(dfDS, classifier, analysis)
-def classifySS(classifier,analysis):
+    return dfDS
+
+def classifySS():
     """
     Classifying the same subject (SS) along a different task
 
     Parameters
     -------------
-    classifier : str
-            The statistical method used for classification
-    analysis : str
-            The type of analysis to be conducted
 
     Returns
     -------------
@@ -106,24 +102,22 @@ def classifySS(classifier,analysis):
     dfSS[['train_task','test_task']]=pd.DataFrame(tmp_df['task'].tolist())
     dfSS['sub']=tmp_df['sub']
     for index, row in dfSS.iterrows():
-        score=model(classifier, analysis, train_sub=row['sub'], test_sub=row['sub'], train_task=row['train_task'], test_task=row['test_task'])
+        score=model('SS', train_sub=row['sub'], test_sub=row['sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
-    dfSS['acc']=acc_scores_per_task
-    #save accuracy
-    dfSS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
-    #classification.plotACC(dfSS, classifier, analysis)
-    #classification.statsACC(dfSS, classifier, analysis)
-    #classification.boxACC(dfSS, classifier, analysis)
-def classifyBS(classifier, analysis):
+    dfSS['diff']=acc_scores_per_task
+    #subset so we only average the SS-OS per train/test tasks
+    STmDT=dfSS[['train_task','test_task','diff']]
+    #take average
+    diff=STmDT.groupby(['train_task','test_task']).mean()
+    diff.reset_index(inplace=True)
+    return diff
+
+def classifyBS():
     """
     Classifying different subjects (BS) along different tasks
 
     Parameters
     -------------
-    classifier : str
-            The statistical method used for classification
-    analysis : str
-            The type of analysis to be conducted
 
     Returns
     -------------
@@ -137,73 +131,20 @@ def classifyBS(classifier, analysis):
     dfBS[['train_task','test_task']]=pd.DataFrame(tmp_df['task'].tolist())
     dfBS[['train_sub', 'test_sub']]=pd.DataFrame(tmp_df['sub'].tolist())
     for index, row in dfBS.iterrows():
-        score=model(classifier, analysis, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
+        score=model('BS', train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfBS['acc']=acc_scores_per_task
-    #save accuracy
-    dfBS.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
-    #classification.plotACC(dfBS, classifier, analysis)
-    #classification.statsACC(dfBS, classifier, analysis)
-    #classification.boxACC(dfBS, classifier, analysis)
-def classifyCV(classifier, analysis):
-    """
-    Classifying same subjects (CV) along the same task
+    return dfBS
 
-    Parameters
-    -------------
-    classifier : str
-            The statistical method used for classification
-    analysis : str
-            The type of analysis to be conducted
 
-    Returns
-    -------------
-    dfCV : DataFrame
-        Dataframe consisting of average accuracy across all subjects
 
-        """
-    avg_CV=[]
-    if classifier=='SVC':
-        clf=LinearSVC()
-    elif classifier=='logReg':
-        clf=LogisticRegression(solver = 'lbfgs')
-    elif classifier=='ridge':
-        clf=RidgeClassifier()
-    else:
-        print('invalid classifier')
-    for task in taskList:
-        acc_scores_per_task=[]
-        cvTable=[]
-        for sub in subList:
-            taskFC=classification.matFiles(dataDir+task+'/'+sub+'_parcel_corrmat.mat')
-            restFC=classification.matFiles(dataDir+'rest/'+sub+'_parcel_corrmat.mat')
-            folds=taskFC.shape[0]
-            x_train, y_train=classification.concateFC(taskFC, restFC)
-            CVscores=cross_val_score(clf, x_train, y_train, cv=folds)
-            mu=CVscores.mean()
-            acc_scores_per_task.append(mu)
-            cv_tmp_df=pd.DataFrame({sub:CVscores})
-            cvTable.append(cv_tmp_df)
-    #acc per fold per sub
-        tmp_df=pd.DataFrame({'sub':subList, task:acc_scores_per_task}).set_index('sub')
-        avg_CV.append(tmp_df)
-        cvTable=pd.concat(cvTable, axis=1)
-    #saving cv per folds if debugging
-        cvTable.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/'+task+'_cvTable_folds.csv')
-    #average acc per sub per tasks
-    df=pd.concat(avg_CV, axis=1)
-    df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/acc.csv')
-    #classification.plotACC(df, classifier, analysis)
-    #classification.statsACC(df, classifier, analysis)
-    #classification.boxACC(df, classifier, analysis)
-def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
+def model(analysis, train_sub, test_sub, train_task, test_task):
     """
     Preparing machine learning model with appropriate data
 
     Parameters
     -------------
-    classifier : str
-            The statistical method used for classification
+
     analysis : string
             The type of analysis to be conducted
     train_sub : str
@@ -221,41 +162,22 @@ def model(classifier, analysis, train_sub, test_sub, train_task, test_task):
             Average accuracy of all folds
 
     """
-    if classifier=='SVC':
-        clf=LinearSVC()
-    elif classifier=='logReg':
-        clf=LogisticRegression(solver = 'lbfgs')
-    elif classifier=='ridge':
-        clf=RidgeClassifier()
-    else:
-        print('Error: You didnt specify what classifier')
-    df=pd.DataFrame()
+
+    clf=RidgeClassifier()
     taskFC=classification.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
     restFC=classification.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
     #if your subs are the same
     if train_sub==test_sub:
         test_taskFC=classification.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-        total_score, acc_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
-        df[train_sub]=acc_score
-        df['train']=train_task
-        df['test']=test_task
-        df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_task+test_task+train_sub+'.csv')
+        total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
     else:
         test_taskFC=classification.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         test_restFC=classification.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
-        total_score, acc_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
-        df['acc']=acc_score
-        df['train']=train_sub
-        df['test']=test_sub
-        df['train_task']=train_task
-        df['test_task']=test_task
-        #DS
-        if train_task==test_task:
-            df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+train_task+'.csv')
-        else:
-            df.to_csv(outDir+'results/'+classifier+'/acc/'+analysis+'/folds/'+train_sub+test_sub+train_task+test_task+'.csv')
+        total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
     return total_score
-#Calculate acc of cross validation within sub within task
+
+
+
 def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
     """
     Cross validation to train and test using nested loops
@@ -277,28 +199,47 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
     """
 
     loo = LeaveOneOut()
+
     taskSize=taskFC.shape[0]
     restSize=restFC.shape[0]
-    t = np.ones(taskSize, dtype = int)
-    r=np.zeros(restSize, dtype=int)
+    t_tmp= np.ones(taskSize, dtype = int)
+    r_tmp=np.zeros(restSize, dtype=int)
+    #Concatenate rest and task labels
+    Y=np.concatenate((t_tmp,r_tmp))
+    #Permute the data
+    Y_perm=np.random.permutation(Y)
+    #For the purpose of this script split them back into a pseudo rest and task array
+    t, r =np.array_split(Y_perm, 2)
     if analysis=='SS':
+        SS_ST_acc_scores=[]
+        ST_tmp=pd.DataFrame()
         df=pd.DataFrame()
         acc_score=[]
         for train_index, test_index in loo.split(taskFC):
             Xtrain_rest, Xtest_rest=restFC[train_index], restFC[test_index]
-            Xtrain_task=taskFC[train_index]
+            Xtrain_task, Xtest_task=taskFC[train_index], taskFC[test_index]
             ytrain_rest=r[train_index]
             ytrain_task=t[train_index]
             X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
             y_tr = np.concatenate((ytrain_task,ytrain_rest))
+
+            #same sub
+            X_val=np.concatenate((Xtest_task,Xtest_rest))
+            y_val=np.array([1,0])
+
             clf.fit(X_tr,y_tr)
+            clf.predict(X_val)
+            #same sub same task:ST
+            SS=clf.score(X_val,y_val)
+            SS_ST_acc_scores.append(SS)
             tmpdf=pd.DataFrame()
             acc_scores_per_fold=[]
             for t_index, te_index in loo.split(test_taskFC):
                 Xtest_task=test_taskFC[te_index]
                 X_Test = np.concatenate((Xtest_task, Xtest_rest))
+                #This way we are including the correct rest and task labels
                 y_Test = np.array([1, 0])
-                #test set
+                #same sub diff task DT
                 clf.predict(X_Test)
                 #Get accuracy of model
                 ACCscores=clf.score(X_Test,y_Test)
@@ -306,9 +247,17 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
             tmpdf['inner_fold']=acc_scores_per_fold
             score=tmpdf['inner_fold'].mean()
             acc_score.append(score)
+
+        #Same sub same task
+        ST_tmp['outer_fold']=SS_ST_acc_scores
+        SS_ST=ST_tmp['outer_fold'].mean()
+
+        #same sub diff task
         df['outer_fold']=acc_score
-        total_score=df['outer_fold'].mean()
-    else:
+        SS_DT=df['outer_fold'].mean()
+        #take the difference
+        total_score=SS_ST-SS_DT
+    elif analysis=='BS':
         df=pd.DataFrame()
         acc_score=[]
         #fold each training set
@@ -338,6 +287,36 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
             acc_score.append(score)
         df['outer_fold']=acc_score
         total_score=df['outer_fold'].mean()
-
-    return total_score, acc_score
-    #return df
+    elif analysis=='DS':
+        df=pd.DataFrame()
+        acc_score=[]
+        #fold each training set
+        for train_index, test_index in loo.split(taskFC):
+            Xtrain_rest=restFC[train_index]
+            Xtrain_task=taskFC[train_index]
+            ytrain_rest=r[train_index]
+            ytrain_task=t[train_index]
+            X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
+            y_tr = np.concatenate((ytrain_task,ytrain_rest))
+            clf.fit(X_tr,y_tr)
+            tmpdf=pd.DataFrame()
+            acc_scores_per_fold=[]
+            #fold each testing set
+            for t_index, te_index in loo.split(test_taskFC):
+                Xtest_rest=test_restFC[te_index]
+                Xtest_task=test_taskFC[te_index]
+                X_te=np.concatenate((Xtest_task, Xtest_rest))
+                y_te=np.array([1, 0])
+                #test set
+                clf.predict(X_te)
+                #Get accuracy of model
+                ACCscores=clf.score(X_te,y_te)
+                acc_scores_per_fold.append(ACCscores)
+            tmpdf['inner_fold']=acc_scores_per_fold
+            score=tmpdf['inner_fold'].mean()
+            acc_score.append(score)
+        df['outer_fold']=acc_score
+        total_score=df['outer_fold'].mean()
+    else:
+        print('Error')
+    return total_score
