@@ -3,7 +3,7 @@
 
 # In[ ]:
 
-
+from sklearn.model_selection import train_test_split
 import matlab.engine
 import numpy as np
 from sklearn.model_selection import LeaveOneOut
@@ -231,8 +231,7 @@ def model(analysis, num,train_sub, test_sub, train_task, test_task):
     #if your subs are the same
         if train_sub==test_sub:
             test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-            test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
-            total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
+            total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
         else:
             test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
             test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
@@ -268,7 +267,7 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
         df=pd.DataFrame()
         acc_score=[]
         for train_index, test_index in loo.split(taskFC):
-            Xtrain_rest, Xtest_rest=restFC[train_index], test_restFC[test_index]
+            Xtrain_rest, Xtest_rest=restFC[train_index], restFC[test_index]
             Xtrain_task=taskFC[train_index]
             ytrain_rest=r[train_index]
             ytrain_task=t[train_index]

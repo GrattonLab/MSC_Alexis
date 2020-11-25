@@ -6,6 +6,7 @@
 
 #comparison Same sub same task - same sub diff task etc etc
 import reshape
+from sklearn.model_selection import train_test_split
 from sklearn.model_selection import LeaveOneOut
 from sklearn.linear_model import RidgeClassifier
 import numpy as np
@@ -165,12 +166,15 @@ def model(analysis, train_sub, test_sub, train_task, test_task):
 
     clf=RidgeClassifier()
     taskFC=classification.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
-    restFC=classification.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
+
     #if your subs are the same
     if train_sub==test_sub:
+        restFC=classification.matFiles(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat')
+        restFC, test_restFC=train_test_split(restFC, test_size=.5)
         test_taskFC=classification.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-        total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
+        total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
     else:
+        restFC=classification.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
         test_taskFC=classification.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         test_restFC=classification.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
         total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
@@ -216,15 +220,15 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
         df=pd.DataFrame()
         acc_score=[]
         for train_index, test_index in loo.split(taskFC):
-            Xtrain_rest, Xtest_rest=restFC[train_index], restFC[test_index]
-            Xtrain_task, Xtest_task=taskFC[train_index], taskFC[test_index]
+            Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
+            Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
             ytrain_rest=r[train_index]
             ytrain_task=t[train_index]
             X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
             y_tr = np.concatenate((ytrain_task,ytrain_rest))
 
             #same sub
-            X_val=np.concatenate((Xtest_task,Xtest_rest))
+            X_val=np.concatenate((Xval_task,Xval_rest))
             y_val=np.array([1,0])
 
             clf.fit(X_tr,y_tr)
@@ -236,6 +240,7 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
             acc_scores_per_fold=[]
             for t_index, te_index in loo.split(test_taskFC):
                 Xtest_task=test_taskFC[te_index]
+                Xtest_rest=test_restFC[te_index]
                 X_Test = np.concatenate((Xtest_task, Xtest_rest))
                 #This way we are including the correct rest and task labels
                 y_Test = np.array([1, 0])
@@ -255,6 +260,7 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
         #same sub diff task
         df['outer_fold']=acc_score
         SS_DT=df['outer_fold'].mean()
+
         #take the difference
         total_score=SS_ST-SS_DT
     elif analysis=='BS':

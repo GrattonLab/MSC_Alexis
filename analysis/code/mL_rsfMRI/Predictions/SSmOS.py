@@ -3,7 +3,7 @@
 
 # In[ ]:
 
-
+from sklearn.model_selection import train_test_split
 import reshape
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import KFold
@@ -153,12 +153,15 @@ def model(analysis, train_sub, test_sub, train_task, test_task):
 
     clf=RidgeClassifier()
     taskFC=reshape.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
-    restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
+
     #if your subs are the same
     if train_sub==test_sub:
+        restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat')
+        restFC, test_restFC=train_test_split(restFC, test_size=.5)
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-        total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
+        total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
     else:
+        restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
         total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
@@ -201,15 +204,15 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
         df=pd.DataFrame()
         acc_score=[]
         for train_index, test_index in loo.split(taskFC):
-            Xtrain_rest, Xtest_rest=restFC[train_index], restFC[test_index]
-            Xtrain_task, Xtest_task=taskFC[train_index], taskFC[test_index]
+            Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
+            Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
             ytrain_rest=r[train_index]
             ytrain_task=t[train_index]
             X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
             y_tr = np.concatenate((ytrain_task,ytrain_rest))
 
-            #same sub
-            X_val=np.concatenate((Xtest_task,Xtest_rest))
+            #same sub same task
+            X_val=np.concatenate((Xval_task,Xval_rest))
             y_val=np.array([1,0])
             #y_tr=np.random.permutation(y_tr)
             clf.fit(X_tr,y_tr)
@@ -220,6 +223,7 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
             acc_scores_per_fold=[]
             for t_index, te_index in loo.split(test_taskFC):
                 Xtest_task=test_taskFC[te_index]
+                Xtest_rest=test_restFC[te_index]
                 X_Test = np.concatenate((Xtest_task, Xtest_rest))
                 #This way we are including the correct rest and task labels
                 y_Test = np.array([1, 0])
@@ -366,26 +370,19 @@ def modelAll(train_sub, test_sub):
     #df=pd.DataFrame()
     #train sub
     memFC=classification.matFiles(dataDir+'mem/'+train_sub+'_parcel_corrmat.mat')
-    mixFC=classification.matFiles(dataDir+'mixed/'+train_sub+'_parcel_corrmat.mat')
+    glassFC=classification.matFiles(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat')
+    semFC=classification.matFiles(dataDir+'semantic/'+train_sub+'_parcel_corrmat.mat')
     motFC=classification.matFiles(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat')
-    restFC=classification.matFiles(dataDir+'rest/corrmats_timesplit/thirds/'+train_sub+'_parcel_corrmat.mat')
-
-    taskFC=np.concatenate((memFC,mixFC,motFC))
+    restFC=classification.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat')
+    taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
     #test sub
     test_memFC=classification.matFiles(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat')
-    test_mixFC=classification.matFiles(dataDir+'mixed/'+test_sub+'_parcel_corrmat.mat')
+    test_glassFC=classification.matFiles(dataDir+'glass/'+test_sub+'_parcel_corrmat.mat')
+    test_semFC=classification.matFiles(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat')
     test_motFC=classification.matFiles(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat')
-    test_restFC=classification.matFiles(dataDir+'rest/corrmats_timesplit/thirds/'+test_sub+'_parcel_corrmat.mat')
-
-    test_taskFC=np.concatenate((test_memFC,test_mixFC,test_motFC))
-
-
+    test_restFC=classification.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
+    test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
     diff_score, same_score, acc_score=CV_foldsAll(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC)
-    #df['acc']=acc_score
-    #df['train_sub']=train_sub
-    #df['test_sub']=test_sub
-    #df.to_csv(outDir+'results/ridge/acc/ALL/folds/'+train_sub+test_sub+'.csv',index=False)
-
     return diff_score, same_score
 
 def CV_foldsAll(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
