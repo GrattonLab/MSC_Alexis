@@ -340,10 +340,10 @@ def classifyAll():
     df['SS']=acc_scores_cv
     df['OS']=acc_scores_per_sub
     df['diff']=df.SS-df.OS
-    DT=df[['diff']]
-    diff=DT.mean()
-    dscore=diff[0]
-    return dscore
+    SS=df['SS'].mean()
+    OS=df['OS'].mean()
+    DT=df['diff'].mean()
+    return DT, SS, OS
 
 
 
@@ -471,8 +471,15 @@ def CV_foldsAll(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
     return diff_sub_score, same_sub_score, acc_score
 def classifyScores():
     ALLscores=[]
+    SSscore=[]
+    OSscore=[]
     for i in range(1000):
-        score=classifyAll()
+        score, SS, OS=classifyAll()
         ALLscores.append(score)
-    ALL_perms=pd.DataFrame(ALLscores,columns=['diff_acc'])
+        SSscore.append(SS)
+        OSscore.append(OS)
+    ALL_perms=pd.DataFrame()
+    ALL_perms['diff_acc']=ALLscores
+    ALL_perms['SS']=SSscore
+    ALL_perms['OS']=OSscore
     ALL_perms.to_csv(outDir+'ALL_acc.csv',index=False)

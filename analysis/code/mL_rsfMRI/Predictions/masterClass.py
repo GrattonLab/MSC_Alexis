@@ -7,6 +7,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import KFold
 from sklearn.linear_model import RidgeClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 import numpy as np
 import os
 import sys
@@ -22,7 +24,8 @@ warnings.filterwarnings("ignore")
 # Initialization of directory information:
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/results/'
+#outDir = thisDir + 'output/results/'
+outDir = thisDir + 'output/results/Log/'
 # Subjects and tasks
 taskList=['glass','semantic', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -149,6 +152,8 @@ def classifyCV():
 
     """
     dfCV=pd.DataFrame(CVvars, columns=['sub','task'])
+    #clf=LinearSVC()
+    #clf=LogisticRegression(solver = 'lbfgs')
     clf=RidgeClassifier()
     acc_scores_per_task=[]
     CVspec=[]
@@ -198,7 +203,8 @@ def model(train_sub, test_sub, train_task, test_task):
             Average accuracy of all folds
 
     """
-
+    #clf=LinearSVC()
+    #clf=LogisticRegression(solver = 'lbfgs')
     clf=RidgeClassifier()
     df=pd.DataFrame()
     taskFC=reshape.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
@@ -347,7 +353,8 @@ def modelAll(train_sub, test_sub):
             Average accuracy of all folds
 
     """
-
+    #clf=LinearSVC()
+    #clf=LogisticRegression(solver = 'lbfgs')
     clf=RidgeClassifier()
     df=pd.DataFrame()
     #train sub

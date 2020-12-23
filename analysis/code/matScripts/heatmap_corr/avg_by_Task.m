@@ -1,7 +1,7 @@
 clear;
 clear all;
 
-load('~/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/mem/allsubs_mem_corrmats_orig.mat', 'avg_task_corrmat')
+load('/Users/Alexis/Box/Quest_Backup/MSC/TaskFC/FC_Parcels/mem/allsubs_mem_corrmats_orig.mat', 'avg_task_corrmat')
 mem=avg_task_corrmat.AllMem
 mem(isinf(mem)|isnan(mem)) = 0; % Replace NaNs and infinite values with zeros
 

@@ -286,7 +286,7 @@ def compute_trans_centers(mods_array,roi_sort):
 
     return transitions,centers
 
-def figure_corrmat(corrmat,Parcel_params, clims=(-1,1)):
+def figure_corrmat(corrmat,Parcel_params, clims=(-.4,1)):
     """ This function will make a nice looking plot of a correlation matrix for a given parcellation,
     labeling and demarkating networks.
     Inputs:
@@ -340,6 +340,3 @@ def getFrames(sub='MSC01', num=5, task='mem'):
         ds[count]=tmp[mask]
         count=count+1
     return ds
-
-
-

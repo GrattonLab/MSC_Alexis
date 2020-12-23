@@ -1,8 +1,0 @@
-#!/bin/bash
-resdir='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/MVPA_mat/regular_test/'
-
-sublist=`cat sub.txt`
-for sub in ${sublist};
-do
-cd ${resdir}
-cp 'test*train*${sub}.mat ${resdir}/results_mat/train*test*${sub}.mat

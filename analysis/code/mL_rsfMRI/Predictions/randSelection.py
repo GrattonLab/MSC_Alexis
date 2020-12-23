@@ -43,7 +43,9 @@ def classifyDS(feat, number):
         score=model(feat, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
         acc_scores_per_task.append(score)
     dfDS['acc']=acc_scores_per_task
-    dfDS.to_csv(outDir+'DS/'+str(number)+'.csv', index=False)
+    dfDS['features']=number
+    return dfDS
+    #dfDS.to_csv(outDir+'DS/'+str(number)+'.csv', index=False)
 def classifySS(feat, number):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(SSvars, columns=['sub','task'])
@@ -54,8 +56,10 @@ def classifySS(feat, number):
         score=model(feat, train_sub=row['sub'], test_sub=row['sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfSS['acc']=acc_scores_per_task
+    dfSS['features']=number
     #save accuracy
-    dfSS.to_csv(outDir+'SS/'+str(number)+'.csv', index=False)
+    return dfSS
+    #dfSS.to_csv(outDir+'SS/'+str(number)+'.csv', index=False)
 def classifyBS(feat, number):
     acc_scores_per_task=[]
     tmp_df=pd.DataFrame(BSvars, columns=['sub','task'])
@@ -66,8 +70,10 @@ def classifyBS(feat, number):
         score=model(feat,train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(score)
     dfBS['acc']=acc_scores_per_task
+    dfBS['features']=number
     #save accuracy
-    dfBS.to_csv(outDir+'BS/'+str(number)+'.csv', index=False)
+    return dfBS
+    #dfBS.to_csv(outDir+'BS/'+str(number)+'.csv', index=False)
 
 def classifyCV(feat, number):
     dfCV=pd.DataFrame(CVvars, columns=['sub','task'])
@@ -84,7 +90,9 @@ def classifyCV(feat, number):
     #acc per fold per sub
     #average acc per sub per tasks
     dfCV['acc']=acc_scores_per_task
-    dfCV.to_csv(outDir+'CV/'+str(number)+'.csv')
+    dfCV['features']=number
+    return dfCV
+    #dfCV.to_csv(outDir+'CV/'+str(number)+'.csv')
 
 def model(feat,train_sub, test_sub, train_task, test_task):
     clf=RidgeClassifier()

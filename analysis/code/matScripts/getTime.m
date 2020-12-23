@@ -1,5 +1,5 @@
 function getTime(sub)
-filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/mLminQuality/results/time'
+filePath='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/'
 %load mem timeseries
     memFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/' sub '_parcel_timecourse.mat'];
     memFC=load(memFile);
