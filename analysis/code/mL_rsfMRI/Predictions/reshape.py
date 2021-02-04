@@ -65,7 +65,7 @@ def concateFC(taskFC, restFC):
     y = np.concatenate((t,r))
     return x, y
 
-def subNets(df='path', networkLabel='networklabel', otherNets=None):
+def subNets(df='path', networkLabel='networklabel',otherNets=None):
     """
     Same as reshape but subset by network
     str options for networks ['unassign',
@@ -102,8 +102,10 @@ def subNets(df='path', networkLabel='networklabel', otherNets=None):
     if otherNets is None:
         dsNet=np.empty((nsess, netRoi[networkLabel]))
     else:
-        netLength=netRoi[networkLabel]+netRoi[otherNets]
-        dsNet=np.empty((nsess, netLength))
+        interBlock=dict([('co',780),('fp',960),('default',1640)])
+        #netLength=netRoi[networkLabel]+netRoi[otherNets]
+        #netLength=netBlock
+        dsNet=np.empty((nsess, interBlock[networkLabel]))
     dsNet_count=0
     for sess in range(nsess):
         ds=fileFC[:,:,sess]
@@ -131,7 +133,8 @@ def subNets(df='path', networkLabel='networklabel', otherNets=None):
         if otherNets is None:
             df_new=df_ut.loc[[networkLabel]]
         else:
-            df_new=df_ut.loc[[networkLabel, otherNets]]
+            df_new=df_ut.loc[networkLabel]
+            df_new=df_new[otherNets]
         #convert to array
         array=df_new.values
         #remove nans
