@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
 #outDir = thisDir + 'output/results/'
-outDir = thisDir + 'output/results/Log/'
+outDir = thisDir + 'output/results/'
 # Subjects and tasks
 taskList=['glass','semantic', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']

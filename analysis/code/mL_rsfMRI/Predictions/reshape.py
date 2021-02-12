@@ -10,7 +10,6 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-import pandas as pd
 import matplotlib.pyplot as plt
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 def matFiles(df='path'):

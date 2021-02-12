@@ -300,5 +300,5 @@ def allTask():
         allsub_per_sess=df['cv_fold'].mean()
         accScore_allsess.append(allsub_per_sess)
     final_df['acc_per_sess']=accScore_allsess
-    #df.to_csv(outDir+'allTasks_acc.csv',index=False)
-    return final_df
+    final_df.to_csv(outDir+'allTasks_acc.csv',index=False)
+    #return final_df
