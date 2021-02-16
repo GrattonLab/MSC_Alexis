@@ -23,6 +23,31 @@ subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 tasksComb=(list(itertools.permutations(taskList, 2)))
+
+
+def classifyBTW():
+    acc_scores_per_sub=[]
+    sen_scores_per_sub=[]
+    spec_scores_per_sub=[]
+    acc_scores_cv=[]
+    sen_scores_cv=[]
+    spec_scores_cv=[]
+    df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
+    for index, row in df.iterrows():
+        diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=btwNet(train_sub=row['train_sub'], test_sub=row['test_sub'])
+        acc_scores_per_sub.append(diff_score)
+        acc_scores_cv.append(same_score)
+        sen_scores_cv.append(CV_sens_score)
+        spec_scores_cv.append(CV_spec_score)
+        sen_scores_per_sub.append(DS_sens_score)
+        spec_scores_per_sub.append(DS_spec_score)
+    df['cv_acc']=acc_scores_cv
+    df['cv_sen']=sen_scores_cv
+    df['cv_spec']=spec_scores_cv
+    df['acc']=acc_scores_per_sub
+    df['ds_sen']=sen_scores_per_sub
+    df['ds_spec']=spec_scores_per_sub
+    df.to_csv(outDir+'wtn_btw_netSelection/btw_acc.csv',index=False)
 def classifyWTN():
     """
     Classifying different subjects along available data rest split into 40 samples to match with task using only within networks
@@ -58,7 +83,25 @@ def classifyWTN():
     df['ds_sen']=sen_scores_per_sub
     df['ds_spec']=spec_scores_per_sub
     df.to_csv(outDir+'wtn_btw_netSelection/wtn_acc.csv',index=False)
-
+def btwNet(train_sub, test_sub):
+    clf=RidgeClassifier()
+    df=pd.DataFrame()
+    #train sub
+    memFC=reshape.btwBlock(dataDir+'mem/'+train_sub+'_parcel_corrmat.mat')
+    semFC=reshape.btwBlock(dataDir+'semantic/'+train_sub+'_parcel_corrmat.mat')
+    glassFC=reshape.btwBlock(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat')
+    motFC=reshape.btwBlock(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat')
+    restFC=reshape.btwBlock(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat')
+    taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
+    #test sub
+    test_memFC=reshape.btwBlock(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat')
+    test_semFC=reshape.btwBlock(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat')
+    test_glassFC=reshape.btwBlock(dataDir+'glass/'+test_sub+'_parcel_corrmat.mat')
+    test_motFC=reshape.btwBlock(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat')
+    test_restFC=reshape.btwBlock(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
+    test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
+    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC)
+    return diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
 
 
 def wtnNet(train_sub, test_sub):

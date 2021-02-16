@@ -63,7 +63,103 @@ def concateFC(taskFC, restFC):
     r=np.zeros(restSize, dtype=int)
     y = np.concatenate((t,r))
     return x, y
+def network_to_network(df='path', networkA='networkA',networkB='networkB'):
+    """
+    A more efficient script for getting network to network connections
+    str options for networks ['unassign',
+    'default',
+    'visual',
+    'fp',
+    'dan',
+    'van',
+    'salience',
+    'co',
+    'sm',
+    'sm-lat',
+    'auditory',
+    'pmn',
+    'pon']
+    Parameters
+    -----------
+    df : str
+        Path to file
+    Returns
+    ------------
+    dsNet : Array of task or rest FC with only blocks
+    """
+ #roi count for building arrays
+    networks=['unassign','default','visual','fp','dan','van','salience','co','sm','sm-lat','auditory','pmn','pon']
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    netSize=determineNetSize(networkA,networkB)
+    dsNet=np.empty((nsess, netSize))
+    dsNet_count=0
+    for sess in range(nsess):
+        ds=fileFC[:,:,sess]
+        Parcel_params = loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
+        roi_sort = np.squeeze(Parcel_params['roi_sort'])
+        corrmat=ds[roi_sort,:][:,roi_sort]
+        nrois=list(range(333))
+        nets=[]
+        position=0
+        count=0
+        networks=Parcel_params['networks']
+        t=Parcel_params['transitions']
+    #have to add extra value otherwise error
+        transitions=np.append(t,333)
+        while count<333:
+            if count<=transitions[position]:
+                nets.append(networks[position])
+                count=count+1
+            else:
+                position=position+1
+        #transform data to locate network
+        df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+        #avoid duplicates by taking upper triangle k=1 so we don't take the first value
+        df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+        #initlize empty
+        btwBlocks=np.array([])
+        tmp=df_ut.loc[networkA,networkB]
+        tmp=tmp.values
+        clean_array=tmp[~np.isnan(tmp)]
+        dsNet[dsNet_count]=clean_array
+        dsNet_count=dsNet_count+1
+    return dsNet
 
+def determineNetSize(networkA,networkB):
+    df=thisDir+'data/mvpa_data/mem/MSC01_parcel_corrmat.mat' #use as temp for knowing size
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    ds=fileFC[:,:,0]
+    Parcel_params =loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
+    roi_sort = np.squeeze(Parcel_params['roi_sort'])
+    corrmat=ds[roi_sort,:][:,roi_sort]
+    nrois=list(range(333))
+    nets=[]
+    position=0
+    count=0
+    networks=Parcel_params['networks']
+    t=Parcel_params['transitions']
+#have to add extra value otherwise error
+    transitions=np.append(t,333)
+    while count<333:
+        if count<=transitions[position]:
+            nets.append(networks[position])
+            count=count+1
+        else:
+            position=position+1
+    #transform data to locate network
+    df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+    #avoid duplicates by taking upper triangle k=1 so we don't take the first value
+    df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+    tmp=df_ut.loc[networkA,networkB]
+    tmp=tmp.values
+    clean_array=tmp[~np.isnan(tmp)]
+    array_size=clean_array.shape[0]
+    return array_size
 def subNets(df='path', networkLabel='networklabel',otherNets=None):
     """
     Same as reshape but subset by network
@@ -138,6 +234,71 @@ def subNets(df='path', networkLabel='networklabel',otherNets=None):
         array=df_new.values
         #remove nans
         clean_array = array[~np.isnan(array)]
+        dsNet[dsNet_count]=clean_array
+        dsNet_count=dsNet_count+1
+    return dsNet
+#btwn network selection
+def btwBlock(df='path'):
+    """
+    Same as subNets but subset between networks
+    str options for networks ['unassign',
+    'default',
+    'visual',
+    'fp',
+    'dan',
+    'van',
+    'salience',
+    'co',
+    'sm',
+    'sm-lat',
+    'auditory',
+    'pmn',
+    'pon']
+    Parameters
+    -----------
+    df : str
+        Path to file
+    Returns
+    ------------
+    dsNet : Array of task or rest FC with only blocks
+    """
+ #roi count for building arrays
+    networks=['unassign','default','visual','fp','dan','van','salience','co','sm','sm-lat','auditory','pmn','pon']
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    dsNet=np.empty((nsess, 49740))
+    dsNet_count=0
+    for sess in range(nsess):
+        ds=fileFC[:,:,sess]
+        Parcel_params = loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
+        roi_sort = np.squeeze(Parcel_params['roi_sort'])
+        corrmat=ds[roi_sort,:][:,roi_sort]
+        nrois=list(range(333))
+        nets=[]
+        position=0
+        count=0
+        networks=Parcel_params['networks']
+        t=Parcel_params['transitions']
+    #have to add extra value otherwise error
+        transitions=np.append(t,333)
+        while count<333:
+            if count<=transitions[position]:
+                nets.append(networks[position])
+                count=count+1
+            else:
+                position=position+1
+        #transform data to locate network
+        df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+        #avoid duplicates by taking upper triangle k=1 so we don't take the first value
+        df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+        #initlize empty
+        btwBlocks=np.array([])
+        for n in networks:
+            df_ut.loc[n,n]=np.nan
+        tmp=df_ut.values
+        clean_array=tmp[~np.isnan(tmp)]
         dsNet[dsNet_count]=clean_array
         dsNet_count=dsNet_count+1
     return dsNet
@@ -342,3 +503,43 @@ def getFrames(sub='MSC01', num=5, task='mem'):
         ds[count]=tmp[mask]
         count=count+1
     return ds
+
+
+def permute_importance(df, network):
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    nrois=333
+    nsess=fileFC.shape[2]
+    ds_full=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    dsNet_count=0
+    for sess in range(nsess):
+        ds=fileFC[:,:,sess]
+        Parcel_params = loadParcelParams('Gordon333','/Users/Alexis/Desktop/MSC_Alexis/analysis/data/Parcel_info/')
+        roi_sort = np.squeeze(Parcel_params['roi_sort'])
+        corrmat=ds[roi_sort,:][:,roi_sort]
+        nrois=list(range(333))
+        nets=[]
+        position=0
+        count=0
+        networks=Parcel_params['networks']
+        t=Parcel_params['transitions']
+    #have to add extra value otherwise error
+        transitions=np.append(t,333)
+        while count<333:
+            if count<=transitions[position]:
+                nets.append(networks[position])
+                count=count+1
+            else:
+                position=position+1
+        #transform data to locate network
+        df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+        #avoid duplicates by taking upper triangle k=1 so we don't take the first value
+        df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+        #permute block
+        df_ut.loc[network,network]=np.random.permutation(df_ut.loc[network,network])
+        tmp=df_ut.values
+        clean_array=tmp[~np.isnan(tmp)]
+        ds_full[dsNet_count]=clean_array
+        dsNet_count=dsNet_count+1
+    return ds_full

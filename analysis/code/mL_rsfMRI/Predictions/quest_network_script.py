@@ -23,7 +23,7 @@ def netFile(netSpec,sub):
     #zero based indexing
     subDict=dict([('MSC01',0),('MSC02',1),('MSC03',2),('MSC04',3),('MSC05',4),('MSC06',5),('MSC07',6),('MSC10',9)])
     taskDict=dict([('mem','AllMem'),('mixed','AllGlass'),('motor','AllMotor')])
-    fullTask=np.empty((40,120))
+    #fullTask=np.empty((40,120))
     fullRest=np.empty((40,120))
     #memory
     tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/mem/allsubs_mem_corrmats_bysess_orig_INDformat.mat'
@@ -36,14 +36,14 @@ def netFile(netSpec,sub):
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
-    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    memFC=np.empty((nsess, int(nrois*(nrois-1)/2)))
     count=0
     #Loop through all 10 days to reshape correlations into linear form
     for sess in range(nsess):
         tmp=fileFC[:,:,sess]
-        ds[count]=tmp[mask]
+        memFC[count]=tmp[mask]
         count=count+1
-    fullTask[:10]=ds
+    #fullTask[:10]=ds
     #motor
     tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/motor/allsubs_motor_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
@@ -55,14 +55,14 @@ def netFile(netSpec,sub):
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
-    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    motFC=np.empty((nsess, int(nrois*(nrois-1)/2)))
     count=0
     #Loop through all 10 days to reshape correlations into linear form
     for sess in range(nsess):
         tmp=fileFC[:,:,sess]
-        ds[count]=tmp[mask]
+        motFC[count]=tmp[mask]
         count=count+1
-    fullTask[10:20]=ds
+    #fullTask[10:20]=ds
     #glass
     tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/mixed/allsubs_mixed_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
@@ -74,14 +74,14 @@ def netFile(netSpec,sub):
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
-    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    glassFC=np.empty((nsess, int(nrois*(nrois-1)/2)))
     count=0
     #Loop through all 10 days to reshape correlations into linear form
     for sess in range(nsess):
         tmp=fileFC[:,:,sess]
-        ds[count]=tmp[mask]
+        glassFC[count]=tmp[mask]
         count=count+1
-    fullTask[20:30]=ds
+    #fullTask[20:30]=ds
     #semantic
     tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/mixed/allsubs_mixed_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
@@ -93,15 +93,15 @@ def netFile(netSpec,sub):
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
-    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    semFC=np.empty((nsess, int(nrois*(nrois-1)/2)))
     count=0
     #Loop through all 10 days to reshape correlations into linear form
     for sess in range(nsess):
         tmp=fileFC[:,:,sess]
-        ds[count]=tmp[mask]
+        semFC[count]=tmp[mask]
         count=count+1
-    fullTask[30:]=ds
-
+    #fullTask[30:]=ds
+    fullTask=np.concatenate((memFC,semFC,glassFC,motFC))
     #will have to write something on converting resting time series data into 4 split pieces
     #######################################################################################
     #open rest
