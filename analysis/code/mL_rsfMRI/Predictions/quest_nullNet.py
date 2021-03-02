@@ -187,7 +187,9 @@ def model(feat,train_sub, test_sub, train_task, test_task):
     #if your subs are the same
     if train_sub==test_sub:
         restFC= randFeats(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat',feat)
-        restFC, test_restFC=train_test_split(restFC, test_size=.5)
+        restFC=tmp_restFC[:10]
+        test_restFC=tmp_restFC[10:]
+        #restFC, test_restFC=train_test_split(restFC, test_size=.5)
         test_taskFC= randFeats(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat',feat)
         ACCscores=CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
     else:
@@ -237,7 +239,7 @@ def CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
 
 for nullNet in netRoi:
     number=netRoi[nullNet]
-    for n in range(125):
+    for n in range(10):
         #generate a new index
         idx=np.random.randint(55278, size=(number))
         DS=classifyDS(idx, number)

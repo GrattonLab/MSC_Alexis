@@ -56,12 +56,16 @@ def storeResults():
     BS_permutations=pd.DataFrame()
     SS_permutations=pd.DataFrame()
     DS_permutations=pd.DataFrame()
-    for i in range(1000):
-        CV=classifyCV()
-        BS=classifyBS()
-        SS=classifySS()
-        DS=classifyDS()
-        print(i)
+    count=0
+    featureSize=np.logspace(1.7,2.54, num=1000,dtype=int)
+    featureSize=featureSize.tolist()
+    for i in featureSize:
+        CV=classifyCV(i)
+        BS=classifyBS(i)
+        SS=classifySS(i)
+        DS=classifyDS(i)
+        print(count)
+        count=count+1
         CV_permutations=pd.concat([CV_permutations,CV])
         BS_permutations=pd.concat([BS_permutations,BS])
         SS_permutations=pd.concat([SS_permutations,SS])
@@ -72,7 +76,7 @@ def storeResults():
     DS_permutations.to_csv(thisDir+'output/results/permutation/DS/frames.csv',index=False)
 
 
-def classifyDS():
+def classifyDS(num):
     """
     Classifying different subjects (DS) along the same task
 
@@ -86,19 +90,18 @@ def classifyDS():
 
     """
     df=pd.DataFrame()
-    num=random.randint(50,350)
     dfDS=pd.DataFrame(subsComb,columns=['train_sub','test_sub'])
     dfDS['train_task']='mem'
     dfDS['test_task']='mem'
     acc_scores_per_task=[]
     for index, row in dfDS.iterrows():
-        score=model('DS',num,train_sub=row['train_sub'], test_sub=row['test_sub'], train_task='mem', test_task='glass')
+        score=model('DS',num,train_sub=row['train_sub'], test_sub=row['test_sub'], train_task='mem', test_task='mem')
         acc_scores_per_task.append(score)
     dfDS['acc']=acc_scores_per_task
     dfDS['frames']=num
     df=pd.concat([df,dfDS])
     return df
-def classifySS():
+def classifySS(num):
     """
     Classifying the same subject (SS) along a different task
 
@@ -113,20 +116,19 @@ def classifySS():
 
     """
     df=pd.DataFrame()
-    num=random.randint(50,350)
     dfSS=pd.DataFrame(subList, columns=['sub'])
     dfSS['train_task']='mem'
     dfSS['test_task']='mixed'
     acc_scores_per_task=[]
     for sub in subList:
-        score=model('SS', num, train_sub=sub, test_sub=sub, train_task='mem', test_task='glass')
+        score=model('SS', num, train_sub=sub, test_sub=sub, train_task='mem', test_task='mixed')
         acc_scores_per_task.append(score)
     dfSS['acc']=acc_scores_per_task
     dfSS['frames']=num
     df=pd.concat([df,dfSS])
     #save accuracy
     return df
-def classifyBS():
+def classifyBS(num):
     """
     Classifying different subjects (BS) along different tasks
 
@@ -141,13 +143,12 @@ def classifyBS():
 
     """
     df=pd.DataFrame()
-    num=random.randint(50,350)
     acc_scores_per_task=[]
     dfBS=pd.DataFrame(subsComb,columns=['train_sub','test_sub'])
     dfBS['train_task']='mem'
     dfBS['test_task']='mixed'
     for index, row in dfBS.iterrows():
-        score=model('BS', num, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task='mem', test_task='glass')
+        score=model('BS', num, train_sub=row['train_sub'], test_sub=row['test_sub'], train_task='mem', test_task='mixed')
         acc_scores_per_task.append(score)
     dfBS['acc']=acc_scores_per_task
     dfBS['frames']=num
@@ -155,7 +156,7 @@ def classifyBS():
     #save accuracy
     return df
 
-def classifyCV():
+def classifyCV(num):
     """
     Classifying same subjects (CV) along the same task
 
@@ -173,7 +174,6 @@ def classifyCV():
     subs_per_task=[]
     task_per_task=[]
     frames_per_task=[]
-    num=random.randint(50,350)
     for sub in subList:
         taskFC=getFrames(sub,num,'mem')
         restFC=getFrames(sub,num, 'rest')
@@ -230,11 +230,11 @@ def model(analysis, num,train_sub, test_sub, train_task, test_task):
     else:
     #if your subs are the same
         if train_sub==test_sub:
-            test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
+            test_taskFC=getFrames(test_sub, num, test_task)
             total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, restFC)
         else:
-            test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-            test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
+            test_taskFC=getFrames(test_sub, num, test_task)
+            test_restFC=getFrames(test_sub, num, 'rest')
             total_score=CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC)
     return total_score
 #Calculate acc of cross validation within sub within task

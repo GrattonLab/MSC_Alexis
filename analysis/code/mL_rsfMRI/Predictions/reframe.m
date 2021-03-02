@@ -1,4 +1,5 @@
 function parcel_corrmat=reframe(sub,frame,task)
+    %frame=int64(frame);
     memFile=['/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/' task '/' sub '_parcel_timecourse.mat'];
     memFC=load(memFile);    
     nsamples = size(memFC.parcel_time, 2);

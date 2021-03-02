@@ -10,7 +10,7 @@ MSC02,mem,1.0,1.0,1.0
 MSC03,glass,0.9,1.0,0.8
 MSC03,semantic,0.9,1.0,0.8
 MSC03,motor,0.95,1.0,0.9
-MSC03,mem,1.0,1.0,1.0
+MSC03,mem,0.9375,1.0,0.875
 MSC04,glass,0.95,1.0,0.9
 MSC04,semantic,0.95,1.0,0.9
 MSC04,motor,1.0,1.0,1.0

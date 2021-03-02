@@ -43,7 +43,10 @@ def matFiles(df='path'):
         tmp=fileFC[:,:,sess]
         ds[count]=tmp[mask]
         count=count+1
-    return ds
+    mask = (ds == 0).all(1)
+    column_indices = np.where(mask)[0]
+    df = ds[~mask,:]
+    return df
 def concateFC(taskFC, restFC):
     """
     Concatenates task and rest FC arrays and creates labels
@@ -92,6 +95,7 @@ def network_to_network(df='path', networkA='networkA',networkB='networkB'):
     fileFC=scipy.io.loadmat(df)
     fileFC=np.array(fileFC['parcel_corrmat'])
     fileFC=np.nan_to_num(fileFC)
+    #nsess=checkSession(df)
     nsess=fileFC.shape[2]
     netSize=determineNetSize(networkA,networkB)
     dsNet=np.empty((nsess, netSize))
@@ -117,7 +121,6 @@ def network_to_network(df='path', networkA='networkA',networkB='networkB'):
                 position=position+1
         #transform data to locate network
         df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
-        #avoid duplicates by taking upper triangle k=1 so we don't take the first value
         df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
         #initlize empty
         btwBlocks=np.array([])
@@ -126,7 +129,11 @@ def network_to_network(df='path', networkA='networkA',networkB='networkB'):
         clean_array=tmp[~np.isnan(tmp)]
         dsNet[dsNet_count]=clean_array
         dsNet_count=dsNet_count+1
-    return dsNet
+    mask = (dsNet == 0).all(1)
+    column_indices = np.where(mask)[0]
+    df = dsNet[~mask,:]
+    return df
+
 
 def determineNetSize(networkA,networkB):
     df=thisDir+'data/mvpa_data/mem/MSC01_parcel_corrmat.mat' #use as temp for knowing size
@@ -294,7 +301,6 @@ def btwBlock(df='path'):
         #avoid duplicates by taking upper triangle k=1 so we don't take the first value
         df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
         #initlize empty
-        btwBlocks=np.array([])
         for n in networks:
             df_ut.loc[n,n]=np.nan
         tmp=df_ut.values
@@ -302,6 +308,7 @@ def btwBlock(df='path'):
         dsNet[dsNet_count]=clean_array
         dsNet_count=dsNet_count+1
     return dsNet
+    #return df_ut
 
 #looking at the blocks of networks ex: default to default connections. This scripts grabs all network blocks
 def subBlock(df='path'):
@@ -543,3 +550,42 @@ def permute_importance(df, network):
         ds_full[dsNet_count]=clean_array
         dsNet_count=dsNet_count+1
     return ds_full
+
+
+
+def checkSession(df='path'):
+    """
+    Convert matlab files into upper triangle np.arrays
+    Parameters
+    -----------
+    df : str
+        Path to file
+    Returns
+    -----------
+    ds : 2D upper triangle FC measures in (roi, days) format
+
+    """
+    #Consistent parameters to use for editing datasets
+    nrois=333
+    #Load FC file
+    fileFC=scipy.io.loadmat(df)
+
+    #Convert to numpy array
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    #Replace nans and infs with zero
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    #Index upper triangle of matrix
+    mask=np.triu_indices(nrois,1)
+    ds=np.empty((nsess, int(nrois*(nrois-1)/2)))
+    count=0
+    #Loop through all 10 days to reshape correlations into linear form
+    for sess in range(nsess):
+        tmp=fileFC[:,:,sess]
+        ds[count]=tmp[mask]
+        count=count+1
+    mask = (ds == 0).all(1)
+    column_indices = np.where(mask)[0]
+    df = ds[~mask,:]
+    sess=df.shape[0]
+    return sess

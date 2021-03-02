@@ -27,7 +27,7 @@ outDir = thisDir + 'output/results/groupAvg/'
 # Subjects and tasks
 taskList=['glass','semantic', 'motor','mem']
 #Only using subs with full 10 sessions
-subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC07','MSC10']
+subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 tasksComb=(list(itertools.permutations(taskList, 2)))
@@ -94,20 +94,23 @@ def model(train_task, test_task):
     loo = LeaveOneOut()
     df=pd.DataFrame()
     #nsess x fc x nsub
-    ds_T=np.empty((10,55278,7))
-    ds_R=np.empty((10,55278,7))
-    ds_Test=np.empty((10,55278,7))
+    ds_T=np.empty((8,55278,8))
+    ds_R=np.empty((8,55278,8))
+    ds_Test=np.empty((8,55278,8))
     count=0
     #get all subs for a given task
     for sub in subList:
         #training task
         tmp_taskFC=reshape.matFiles(dataDir+train_task+'/'+sub+'_parcel_corrmat.mat')
+        tmp_taskFC=tmp_taskFC[:8,:]
         tmp_restFC=reshape.matFiles(dataDir+'rest/'+sub+'_parcel_corrmat.mat')
+        tmp_restFC=tmp_restFC[:8,:]
         #reshape 2d into 3d nsessxfcxnsubs
         ds_T[:,:,count]=tmp_taskFC
         ds_R[:,:,count]=tmp_restFC
         #testing task
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+sub+'_parcel_corrmat.mat')
+        test_taskFC=test_taskFC[:8,:]
         ds_Test[:,:,count]=test_taskFC
         count=count+1
     sess_wtn_score=[]
@@ -118,7 +121,7 @@ def model(train_task, test_task):
     #test on new task of left out sub
     clf=RidgeClassifier()
     loo = LeaveOneOut()
-    for i in range(10):
+    for i in range(8):
     #takes one session of data (7 subs)
         taskFC=ds_T[i,:,:]
         taskFC=taskFC.T

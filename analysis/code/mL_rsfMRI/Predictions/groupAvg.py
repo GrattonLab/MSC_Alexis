@@ -26,7 +26,7 @@ outDir = thisDir + 'output/results/groupAvg/'
 # Subjects and tasks
 taskList=['glass','semantic', 'motor','mem']
 #Only using subs with full 10 sessions
-subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC07','MSC10']
+subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 tasksComb=(list(itertools.permutations(taskList, 2)))
@@ -91,7 +91,7 @@ def model(train_task, test_task):
             Average accuracy of all folds of a left out subject but tested on a new task
 
     """
-    #nsess x fc x nsub
+    #nsess x fc x nsub going with all subs 
     ds_T=np.empty((10,55278,7))
     ds_R=np.empty((10,55278,7))
     ds_Test=np.empty((10,55278,7))
@@ -100,6 +100,7 @@ def model(train_task, test_task):
     for sub in subList:
         #training task
         tmp_taskFC=reshape.matFiles(dataDir+train_task+'/'+sub+'_parcel_corrmat.mat')
+
         tmp_restFC=reshape.matFiles(dataDir+'rest/'+sub+'_parcel_corrmat.mat')
         #reshape 2d into 3d nsessxfcxnsubs
         ds_T[:,:,count]=tmp_taskFC
@@ -201,19 +202,23 @@ def allTask():
     loo = LeaveOneOut()
     final_df=pd.DataFrame()
     #nsess x fc x nsub
-    ds_mem=np.empty((10,55278,7))
-    ds_sem=np.empty((10,55278,7))
-    ds_glass=np.empty((10,55278,7))
-    ds_motor=np.empty((10,55278,7))
-    ds_R=np.empty((40,55278,7))
+    ds_mem=np.empty((8,55278,8))
+    ds_sem=np.empty((8,55278,8))
+    ds_glass=np.empty((8,55278,8))
+    ds_motor=np.empty((8,55278,8))
+    ds_R=np.empty((40,55278,8))
     count=0
     #get all subs for a given task
     for sub in subList:
         #training task
         tmp_memFC=reshape.matFiles(dataDir+'mem/'+sub+'_parcel_corrmat.mat')
+        tmp_memFC=tmp_memFC[:8,:]
         tmp_semFC=reshape.matFiles(dataDir+'semantic/'+sub+'_parcel_corrmat.mat')
+        tmp_semFC=tmp_semFC[:8,:]
         tmp_glassFC=reshape.matFiles(dataDir+'glass/'+sub+'_parcel_corrmat.mat')
+        tmp_glassFC=tmp_glassFC[:8,:]
         tmp_motorFC=reshape.matFiles(dataDir+'motor/'+sub+'_parcel_corrmat.mat')
+        tmp_motorFC=tmp_motorFC[:8,:]
         tmp_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+sub+'_parcel_corrmat.mat')
         #reshape 2d into 3d nsessxfcxnsubs
         ds_mem[:,:,count]=tmp_memFC
@@ -225,14 +230,14 @@ def allTask():
 
 
     #split up by subs not sess
-    sub_splits=np.empty((7,55278))
+    sub_splits=np.empty((8,55278))
     #left out sub
 
     sen_CV=[]
     spec_CV=[]
     accScore_allsess=[]
     #declare session to work in first 10 sessions
-    for i in range(10):
+    for i in range(8):
         cv_scoreList=[]
         df=pd.DataFrame()
         tmp_mem=ds_mem[i,:,:]
@@ -266,7 +271,7 @@ def allTask():
             #now reshape data
             Xtrain_task=np.concatenate((train_mem,train_mot,train_sem,train_glass))
             Xtest_task=np.concatenate((test_mem,test_mot,test_sem,test_glass))
-            Xtrain_rest=train_rest.reshape(24,55278)
+            Xtrain_rest=train_rest.reshape(28,55278)
             #test on a new task of 1-6 subs
             #test on a new task of left out sub
             #reshape data into a useable format for mL
@@ -300,5 +305,7 @@ def allTask():
         allsub_per_sess=df['cv_fold'].mean()
         accScore_allsess.append(allsub_per_sess)
     final_df['acc_per_sess']=accScore_allsess
+    #return final_df
     final_df.to_csv(outDir+'allTasks_acc.csv',index=False)
+    #return Xtest_task, Xtrain_rest, Xtrain_task, Xtest_rest
     #return final_df

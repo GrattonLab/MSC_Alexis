@@ -34,9 +34,9 @@ def classifyAll():
     """
     #comparison of days analysis
     allDay=pd.DataFrame()
-    days=30
-    while days>3:
-        idx=np.random.randint(30, size=(days))
+    days=39 #zero based indexing
+    while days>4:
+        idx=np.random.randint(39, size=(days))
         acc_scores_per_sub=[]
         acc_scores_cv=[]
         tmpdf=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
@@ -161,7 +161,7 @@ def CV_folds(idx, train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
 
 def runDays():
     iterDays=pd.DataFrame()
-    for i in range(20):
+    for i in range(125):
         df=classifyAll()
         iterDays=pd.concat([iterDays,df])
     iterDays.to_csv(outDir+'manDays.csv',index=False)

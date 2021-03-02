@@ -92,7 +92,8 @@ def btwNet(train_sub, test_sub):
     glassFC=reshape.btwBlock(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat')
     motFC=reshape.btwBlock(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat')
     restFC=reshape.btwBlock(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat')
-    taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
+    restFC=np.reshape(restFC,(10,4,49740)) #taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
+    nSize=49740
     #test sub
     test_memFC=reshape.btwBlock(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat')
     test_semFC=reshape.btwBlock(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat')
@@ -100,9 +101,9 @@ def btwNet(train_sub, test_sub):
     test_motFC=reshape.btwBlock(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat')
     test_restFC=reshape.btwBlock(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
     test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
-    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC)
+    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(nSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC, test_restFC)
     return diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
-
+    #return taskFC,restFC,test_taskFC,test_restFC
 
 def wtnNet(train_sub, test_sub):
     """
@@ -131,7 +132,9 @@ def wtnNet(train_sub, test_sub):
     glassFC=reshape.subBlock(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat')
     motFC=reshape.subBlock(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat')
     restFC=reshape.subBlock(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat')
-    taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
+    restFC=np.reshape(restFC,(10,4,4410))
+    nSize=4410
+    #taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
     #test sub
     test_memFC=reshape.subBlock(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat')
     test_semFC=reshape.subBlock(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat')
@@ -139,10 +142,10 @@ def wtnNet(train_sub, test_sub):
     test_motFC=reshape.subBlock(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat')
     test_restFC=reshape.subBlock(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
     test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
-    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC)
+    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(nSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC, test_restFC)
     return diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
 
-def K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
+def K_folds(nSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC, test_restFC):
     """
     Cross validation to train and test using nested loops
 
@@ -161,10 +164,12 @@ def K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
     """
 
     kf = KFold(n_splits=5)
+    """
     taskSize=taskFC.shape[0]
     restSize=restFC.shape[0]
     t = np.ones(taskSize, dtype = int)
     r=np.zeros(restSize, dtype=int)
+    """
     test_taskSize=test_taskFC.shape[0]
     test_restSize=test_restFC.shape[0]
     testT= np.ones(test_taskSize, dtype = int)
@@ -177,11 +182,28 @@ def K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
     DSspec=[]
     DSsen=[]
     #fold each training set
-    for train_index, test_index in kf.split(taskFC):
-        Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
-        Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
-        ytrain_rest, yval_rest=r[train_index], r[test_index]
-        ytrain_task, yval_task=t[train_index], t[test_index]
+    if train_sub=='MSC03':
+        split=np.empty((8,nSize))
+        #xtrainSize=24
+        #xtestSize=4
+    elif train_sub=='MSC06' or train_sub=='MSC07':
+        split=np.empty((9,nSize))
+    else:
+        split=np.empty((10,nSize))
+    for train_index, test_index in kf.split(split):
+        memtrain, memval=memFC[train_index], memFC[test_index]
+        semtrain, semval=semFC[train_index], semFC[test_index]
+        mottrain, motval=motFC[train_index], motFC[test_index]
+        glatrain, glaval=glassFC[train_index], glassFC[test_index]
+        Xtrain_task=np.concatenate((memtrain,semtrain,mottrain,glatrain))
+        Xtrain_rest, Xval_rest=restFC[train_index,:,:], restFC[test_index,:,:]
+        Xval_task=np.concatenate((memval,semval,motval,glaval))
+        Xtrain_rest=np.reshape(Xtrain_rest,(-1,nSize))
+        Xval_rest=np.reshape(Xval_rest,(-1,nSize))
+        ytrain_task = np.ones(Xtrain_task.shape[0], dtype = int)
+        ytrain_rest=np.zeros(Xtrain_rest.shape[0], dtype=int)
+        yval_task = np.ones(Xval_task.shape[0], dtype = int)
+        yval_rest=np.zeros(Xval_rest.shape[0], dtype=int)
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
         X_val=np.concatenate((Xval_task, Xval_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))

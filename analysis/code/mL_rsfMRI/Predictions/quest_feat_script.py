@@ -32,31 +32,7 @@ BSvars=list(itertools.product(list(subsComb),list(tasksComb)))
 #CV combinations
 CVvars=list(itertools.product(list(subList),list(taskList)))
 
-DS_df=pd.DataFrame()
-SS_df=pd.DataFrame()
-BS_df=pd.DataFrame()
-CV_df=pd.DataFrame()
-#generate log sample
-#1000 points for log selection
-#loop through 125 times to generate 8*125=1000 samples per log point
-featureSize=np.logspace(1, 4.7, num=1000,dtype=int)
-for number in featureSize:
-    for n in range(125):
-        #generate a new index
-        idx=np.random.randint(55278, size=(number))
-        DS=classifyDS(idx, number)
-        DS_df=pd.concat([DS_df,DS])
-        SS=classifySS(idx, number)
-        SS_df=pd.concat([SS_df,SS])
-        BS=classifyBS(idx, number)
-        BS_df=pd.concat([BS_df,BS])
-        CV=classifyCV(idx, number)
-        CV_df=pd.concat([CV_df,CV])
-    print('Finished with '+str(number))
-DS_df.to_csv(outDir+'DS/acc.csv', index=False)
-SS_df.to_csv(outDir+'SS/acc.csv', index=False)
-BS_df.to_csv(outDir+'BS/acc.csv', index=False)
-CV_df.to_csv(outDir+'CV/acc.csv', index=False)
+
 
 
 def matFiles(df='path'):
@@ -90,7 +66,10 @@ def matFiles(df='path'):
         tmp=fileFC[:,:,sess]
         ds[count]=tmp[mask]
         count=count+1
-    return ds
+    mask = (ds == 0).all(1)
+    column_indices = np.where(mask)[0]
+    df = ds[~mask,:]
+    return df
 
 def randFeats(df, idx):
     """
@@ -200,8 +179,10 @@ def model(feat,train_sub, test_sub, train_task, test_task):
     taskFC= randFeats(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat',feat)
     #if your subs are the same
     if train_sub==test_sub:
-        restFC= randFeats(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat',feat)
-        restFC, test_restFC=train_test_split(restFC, test_size=.5)
+        tmp_restFC= randFeats(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat',feat)
+        restFC=tmp_restFC[:10]
+        test_restFC=tmp_restFC[10:]
+        #restFC, test_restFC=train_test_split(restFC, test_size=.5)
         test_taskFC= randFeats(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat',feat)
         ACCscores=CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
     else:
@@ -247,3 +228,29 @@ def CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     total_score=df['outer_fold'].mean()
 
     return total_score
+
+
+DS_df=pd.DataFrame()
+SS_df=pd.DataFrame()
+BS_df=pd.DataFrame()
+CV_df=pd.DataFrame()
+#generate log sample
+#1000 points for log selection
+#loop through 125 times to generate 8*125=1000 samples per log point
+featureSize=np.logspace(1, 4.7, num=1000,dtype=int)
+for number in featureSize:
+        #generate a new index
+    idx=np.random.randint(55278, size=(number))
+    DS=classifyDS(idx, number)
+    DS_df=pd.concat([DS_df,DS])
+    SS=classifySS(idx, number)
+    SS_df=pd.concat([SS_df,SS])
+    BS=classifyBS(idx, number)
+    BS_df=pd.concat([BS_df,BS])
+    CV=classifyCV(idx, number)
+    CV_df=pd.concat([CV_df,CV])
+    print('Finished with '+str(number))
+DS_df.to_csv(outDir+'DS/acc.csv', index=False)
+SS_df.to_csv(outDir+'SS/acc.csv', index=False)
+BS_df.to_csv(outDir+'BS/acc.csv', index=False)
+CV_df.to_csv(outDir+'CV/acc.csv', index=False)

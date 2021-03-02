@@ -46,7 +46,7 @@ networks=['unassign','default','visual','fp','dan','van','salience','co','sm','s
 #no repeats
 netComb=(list(itertools.combinations(networks, 2)))
 def Net2Net():
-#only take within network for model 
+#only take within network for model
     finalDF=pd.DataFrame()
     for i in networks:
         tmp_df=classifyAll(network=i,subnetwork=i)
@@ -124,7 +124,9 @@ def modelAll(network,subnetwork,train_sub, test_sub):
     glassFC=reshape.network_to_network(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat',network,subnetwork)
     motFC=reshape.network_to_network(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat',network,subnetwork)
     restFC=reshape.network_to_network(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat',network,subnetwork)
-    taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
+    netSize=reshape.determineNetSize(network,subnetwork)
+    restFC=np.reshape(restFC,(10,4,netSize))
+    #taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
     #test sub
     test_memFC=reshape.network_to_network(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat',network,subnetwork)
     test_semFC=reshape.network_to_network(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat',network,subnetwork)
@@ -133,10 +135,11 @@ def modelAll(network,subnetwork,train_sub, test_sub):
     test_restFC=reshape.network_to_network(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat',network,subnetwork)
     test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
     #return taskFC,restFC, test_taskFC,test_restFC
-    diff_score, same_score=K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC)
+    diff_score, same_score=K_folds(netSize,train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_restFC)
     return diff_score, same_score
 
-def K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
+
+def K_folds(netSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC, test_restFC):
     """
     Cross validation to train and test using nested loops
 
@@ -154,11 +157,13 @@ def K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
         List of accuracy for each outer fold
     """
 
-    kf = KFold(n_splits=5)
+    kf = KFold(n_splits=5,shuffle=True)
+    """
     taskSize=taskFC.shape[0]
     restSize=restFC.shape[0]
     t = np.ones(taskSize, dtype = int)
     r=np.zeros(restSize, dtype=int)
+    """
     test_taskSize=test_taskFC.shape[0]
     test_restSize=test_restFC.shape[0]
     testT= np.ones(test_taskSize, dtype = int)
@@ -167,11 +172,28 @@ def K_folds(train_sub, clf, taskFC, restFC, test_taskFC, test_restFC):
     df=pd.DataFrame()
     acc_score=[]
     #fold each training set
-    for train_index, test_index in kf.split(taskFC):
-        Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
-        Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
-        ytrain_rest, yval_rest=r[train_index], r[test_index]
-        ytrain_task, yval_task=t[train_index], t[test_index]
+    if train_sub=='MSC03':
+        split=np.empty((8,netSize))
+        #xtrainSize=24
+        #xtestSize=4
+    elif train_sub=='MSC06' or train_sub=='MSC07':
+        split=np.empty((9,netSize))
+    else:
+        split=np.empty((10,netSize))
+    for train_index, test_index in kf.split(split):
+        memtrain, memval=memFC[train_index], memFC[test_index]
+        semtrain, semval=semFC[train_index], semFC[test_index]
+        mottrain, motval=motFC[train_index], motFC[test_index]
+        glatrain, glaval=glassFC[train_index], glassFC[test_index]
+        Xtrain_task=np.concatenate((memtrain,semtrain,mottrain,glatrain))
+        Xtrain_rest, Xval_rest=restFC[train_index,:,:], restFC[test_index,:,:]
+        Xval_task=np.concatenate((memval,semval,motval,glaval))
+        Xtrain_rest=np.reshape(Xtrain_rest,(-1,netSize))
+        Xval_rest=np.reshape(Xval_rest,(-1,netSize))
+        ytrain_task = np.ones(Xtrain_task.shape[0], dtype = int)
+        ytrain_rest=np.zeros(Xtrain_rest.shape[0], dtype=int)
+        yval_task = np.ones(Xval_task.shape[0], dtype = int)
+        yval_rest=np.zeros(Xval_rest.shape[0], dtype=int)
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
         X_val=np.concatenate((Xval_task, Xval_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
