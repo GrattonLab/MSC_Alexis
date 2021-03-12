@@ -12,6 +12,7 @@ import sys
 import os
 import matplotlib.pyplot as plt
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
+dataDir = thisDir + 'data/mvpa_data/'
 def matFiles(df='path'):
     """
     Convert matlab files into upper triangle np.arrays
@@ -243,6 +244,9 @@ def subNets(df='path', networkLabel='networklabel',otherNets=None):
         clean_array = array[~np.isnan(array)]
         dsNet[dsNet_count]=clean_array
         dsNet_count=dsNet_count+1
+    mask = (dsNet == 0).all(1)
+    #column_indices = np.where(mask)[0]
+    df = dsNet[~mask,:]
     return dsNet
 #btwn network selection
 def btwBlock(df='path'):
@@ -589,3 +593,252 @@ def checkSession(df='path'):
     df = ds[~mask,:]
     sess=df.shape[0]
     return sess
+
+
+
+
+def permROI(df='path'):
+    """
+    Formats arrays to be in the same format as the reorganized index
+    Parameters
+    -----------
+    df : str
+        Path to file
+    Returns
+    ------------
+    dsNet : Array of task or rest FC with only blocks
+    """
+ #roi count for building arrays
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    nsess=fileFC.shape[2]
+    dsNet=np.empty((nsess, 55278))
+    dsNet_count=0
+    for sess in range(nsess):
+        ds=fileFC[:,:,sess]
+        Parcel_params = loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
+        roi_sort = np.squeeze(Parcel_params['roi_sort'])
+        corrmat=ds[roi_sort,:][:,roi_sort]
+        nrois=list(range(333))
+        nets=[]
+        position=0
+        count=0
+        networks=Parcel_params['networks']
+        t=Parcel_params['transitions']
+    #have to add extra value otherwise error
+        transitions=np.append(t,333)
+        while count<333:
+            if count<=transitions[position]:
+                nets.append(networks[position])
+                count=count+1
+            else:
+                position=position+1
+        #transform data to locate network
+        df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+        df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+        df_new=pd.melt(df_ut,ignore_index=False)
+        df_new.dropna(inplace=True)
+        df_new.reset_index(inplace=True)
+        clean=df_new.value.values
+        dsNet[dsNet_count]=clean
+        dsNet_count=dsNet_count+1
+    mask = (dsNet == 0).all(1)
+    column_indices = np.where(mask)[0]
+    df = dsNet[~mask,:]
+    return df
+
+
+
+
+def getIndices():
+    """
+    Get mask and use as dictionary
+    Parameters
+    -----------
+    df : str
+        Path to file
+    Returns
+    ------------
+    dsNet : Array of task or rest FC with only blocks
+    """
+ #roi count for building arrays
+    df='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/mvpa_data/mem/MSC01_parcel_corrmat.mat' #temp file for getting indices
+    fileFC=scipy.io.loadmat(df)
+    fileFC=np.array(fileFC['parcel_corrmat'])
+    fileFC=np.nan_to_num(fileFC)
+    ds=fileFC[:,:,0]
+    Parcel_params = loadParcelParams('Gordon333',thisDir+'data/Parcel_info/')
+    roi_sort = np.squeeze(Parcel_params['roi_sort'])
+    corrmat=ds[roi_sort,:][:,roi_sort]
+    nrois=list(range(333))
+    nets=[]
+    position=0
+    count=0
+    networks=Parcel_params['networks']
+    t=Parcel_params['transitions']
+#have to add extra value otherwise error
+    transitions=np.append(t,333)
+    while count<333:
+        if count<=transitions[position]:
+            nets.append(networks[position])
+            count=count+1
+        else:
+            position=position+1
+    #transform data to locate network
+    df=pd.DataFrame(corrmat, index=[nets, nrois], columns=[nets, nrois])
+    df_ut = df.where(np.triu(np.ones(df.shape),1).astype(np.bool))
+    df_new=pd.melt(df_ut,ignore_index=False)
+    df_new.dropna(inplace=True)
+    df_new.reset_index(inplace=True)
+    return df_new
+
+def permuteIndices(taskFC,restFC,network):
+    """
+    Permute rows of networks and switch tast and rest of that particular network
+    Parameters
+    -----------
+    taskFC: numpy array
+        nsess x ROI
+    restFC: numpy array
+        nsess x ROI
+    network: str
+        particular network of interest
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC permuting specific rows
+    """
+    indices=getIndices()
+    index=indices.index
+    condition=indices['level_0']==network
+    ROI=index[condition]
+    ROI_list=ROI.tolist()
+    tmpTask=taskFC[:,ROI_list]
+    tmpRest=restFC[:,ROI_list]
+    #permute values
+    tmpTask_permute=np.random.permutation(tmpTask)
+    tmpRest_permute=np.random.permutation(tmpRest)
+    #Now switch
+    taskFC[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    restFC[:,ROI_list]=tmpTask_permute
+    return taskFC,restFC
+
+def AllSubFiles(test_sub):
+    """
+    Return task and rest FC all subs
+    Parameters
+    -----------
+    test_sub: Array of testing subs
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC of all testing subs
+    """
+    a_memFC=matFiles(dataDir+'mem/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_semFC=matFiles(dataDir+'semantic/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_glassFC=matFiles(dataDir+'glass/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_motFC=matFiles(dataDir+'motor/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[0]+'_parcel_corrmat.mat')
+
+    b_memFC=matFiles(dataDir+'mem/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_semFC=matFiles(dataDir+'semantic/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_glassFC=matFiles(dataDir+'glass/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_motFC=matFiles(dataDir+'motor/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[1]+'_parcel_corrmat.mat')
+
+    c_memFC=matFiles(dataDir+'mem/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_semFC=matFiles(dataDir+'semantic/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_glassFC=matFiles(dataDir+'glass/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_motFC=matFiles(dataDir+'motor/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[2]+'_parcel_corrmat.mat')
+
+    d_memFC=matFiles(dataDir+'mem/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_semFC=matFiles(dataDir+'semantic/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_glassFC=matFiles(dataDir+'glass/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_motFC=matFiles(dataDir+'motor/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[3]+'_parcel_corrmat.mat')
+
+    e_memFC=matFiles(dataDir+'mem/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_semFC=matFiles(dataDir+'semantic/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_glassFC=matFiles(dataDir+'glass/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_motFC=matFiles(dataDir+'motor/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[4]+'_parcel_corrmat.mat')
+
+    f_memFC=matFiles(dataDir+'mem/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_semFC=matFiles(dataDir+'semantic/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_glassFC=matFiles(dataDir+'glass/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_motFC=matFiles(dataDir+'motor/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[5]+'_parcel_corrmat.mat')
+
+    g_memFC=matFiles(dataDir+'mem/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_semFC=matFiles(dataDir+'semantic/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_glassFC=matFiles(dataDir+'glass/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_motFC=matFiles(dataDir+'motor/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_restFC=matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[6]+'_parcel_corrmat.mat')
+
+
+    taskFC=np.concatenate((a_memFC,a_semFC,a_glassFC,a_motFC,b_memFC,b_semFC,b_glassFC,b_motFC,c_memFC,c_semFC,c_glassFC,c_motFC,d_memFC,d_semFC,d_glassFC,d_motFC,e_memFC,e_semFC,e_glassFC,e_motFC,f_memFC,f_semFC,f_glassFC,f_motFC,g_memFC,g_semFC,g_glassFC,g_motFC))
+    restFC=np.concatenate((a_restFC,b_restFC,c_restFC,d_restFC,e_restFC,f_restFC,g_restFC))
+
+    return taskFC, restFC
+
+
+def permuteIndicesRandom(taskFC,restFC,network):
+    """
+    Permute rows of networks and switch tast and rest of that particular network
+    Parameters
+    -----------
+    taskFC: numpy array
+        nsess x ROI
+    restFC: numpy array
+        nsess x ROI
+    network: str
+        particular network of interest
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC permuting specific rows
+    """
+    #netRoi=dict([('unassign',14808),('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 494),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
+    #number=netRoi[network]
+    #idx=np.random.randint(55278, size=(number))#will generate random index to sample from
+    idx=np.random.randint(55278, size=(network))
+    tmpTask=taskFC[:,idx]
+    tmpRest=restFC[:,idx]
+    #permute values
+    tmpTask_permute=np.random.permutation(tmpTask)
+    tmpRest_permute=np.random.permutation(tmpRest)
+    #Now switch
+    taskFC[:,idx]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    restFC[:,idx]=tmpTask_permute
+    return taskFC,restFC
+
+
+
+def permuteIndices_byRow(taskFC,restFC,rowID):
+    """
+    Permute rows of networks and switch tast and rest
+    Parameters
+    -----------
+    taskFC: numpy array
+        nsess x ROI
+    restFC: numpy array
+        nsess x ROI
+    network: str
+        particular network of interest
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC permuting specific rows
+    """
+    indices=getIndices()
+    index=indices.index
+    condition=indices['level_1']==rowID
+    ROI=index[condition]
+    ROI_list=ROI.tolist()
+    tmpTask=taskFC[:,ROI_list]
+    tmpRest=restFC[:,ROI_list]
+    #permute values
+    tmpTask_permute=np.random.permutation(tmpTask)
+    tmpRest_permute=np.random.permutation(tmpRest)
+    #Now switch
+    taskFC[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    restFC[:,ROI_list]=tmpTask_permute
+    return taskFC,restFC

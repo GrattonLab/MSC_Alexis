@@ -12,11 +12,15 @@ from sklearn.model_selection import cross_val_score
 import itertools
 import scipy.io
 import random
+import os
+import sys
 #import other python scripts for further anlaysis
 # Initialization of directory information:
-#thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
-dataDir = '/projects/p31240/'
-outDir = '/projects/p31240/rdmNetwork/'
+thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
+dataDir = thisDir + 'data/mvpa_data/'
+outDir = thisDir + 'output/results/rdmNetwork/'
+#dataDir = '/projects/p31240/'
+#outDir = '/projects/p31240/rdmNetwork/'
 # Subjects and tasks
 taskList=['semantic','glass', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -197,6 +201,12 @@ def CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     restSize=restFC.shape[0]
     t = np.ones(taskSize, dtype = int)
     r=np.zeros(restSize, dtype=int)
+    test_taskSize=test_taskFC.shape[0]
+    test_restSize=test_restFC.shape[0]
+    test_t = np.ones(test_taskSize, dtype = int)
+    test_r=np.zeros(test_restSize, dtype=int)
+    Xtest=np.concatenate((test_taskFC,test_restFC))
+    ytest=np.concatenate((test_t,test_r))
     df=pd.DataFrame()
     acc_score=[]
     #fold each training set
@@ -208,49 +218,36 @@ def CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         clf.fit(X_tr,y_tr)
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
         #fold each testing set
-        for t_index, te_index in loo.split(test_taskFC):
-            Xtest_rest=test_restFC[te_index]
-            Xtest_task=test_taskFC[te_index]
-            X_te=np.concatenate((Xtest_task, Xtest_rest))
-            y_te=np.array([1, 0])
-            #test set
-            clf.predict(X_te)
-            #Get accuracy of model
-            ACCscores=clf.score(X_te,y_te)
-            acc_scores_per_fold.append(ACCscores)
-        tmpdf['inner_fold']=acc_scores_per_fold
-        score=tmpdf['inner_fold'].mean()
+        score=clf.score(Xtest,ytest)
         acc_score.append(score)
     df['outer_fold']=acc_score
     total_score=df['outer_fold'].mean()
 
     return total_score
 
-
-DS_df=pd.DataFrame()
-SS_df=pd.DataFrame()
-BS_df=pd.DataFrame()
-CV_df=pd.DataFrame()
-#generate log sample
-#1000 points for log selection
-#loop through 125 times to generate 8*125=1000 samples per log point
-featureSize=np.logspace(1, 4.7, num=1000,dtype=int)
-for number in featureSize:
-        #generate a new index
-    idx=np.random.randint(55278, size=(number))
-    DS=classifyDS(idx, number)
-    DS_df=pd.concat([DS_df,DS])
-    SS=classifySS(idx, number)
-    SS_df=pd.concat([SS_df,SS])
-    BS=classifyBS(idx, number)
-    BS_df=pd.concat([BS_df,BS])
-    CV=classifyCV(idx, number)
-    CV_df=pd.concat([CV_df,CV])
-    print('Finished with '+str(number))
-DS_df.to_csv(outDir+'DS/acc.csv', index=False)
-SS_df.to_csv(outDir+'SS/acc.csv', index=False)
-BS_df.to_csv(outDir+'BS/acc.csv', index=False)
-CV_df.to_csv(outDir+'CV/acc.csv', index=False)
+def runScript():
+    DS_df=pd.DataFrame()
+    SS_df=pd.DataFrame()
+    BS_df=pd.DataFrame()
+    CV_df=pd.DataFrame()
+    #generate log sample
+    #1000 points for log selection
+    #loop through 125 times to generate 8*125=1000 samples per log point
+    featureSize=np.logspace(1, 4.7, num=1000,dtype=int)
+    for number in featureSize:
+            #generate a new index
+        idx=np.random.randint(55278, size=(number))
+        DS=classifyDS(idx, number)
+        DS_df=pd.concat([DS_df,DS])
+        SS=classifySS(idx, number)
+        SS_df=pd.concat([SS_df,SS])
+        BS=classifyBS(idx, number)
+        BS_df=pd.concat([BS_df,BS])
+        CV=classifyCV(idx, number)
+        CV_df=pd.concat([CV_df,CV])
+        print('Finished with '+str(number))
+    DS_df.to_csv(outDir+'DS/acc.csv', index=False)
+    SS_df.to_csv(outDir+'SS/acc.csv', index=False)
+    BS_df.to_csv(outDir+'BS/acc.csv', index=False)
+    CV_df.to_csv(outDir+'CV/acc.csv', index=False)

@@ -428,7 +428,7 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     DSsen=[]
     #fold each training set
     if train_sub=='MSC03':
-        split=np.empty((8,55527))
+        split=np.empty((8,55278))
         #xtrainSize=24
         #xtestSize=4
     elif train_sub=='MSC06' or train_sub=='MSC07':
