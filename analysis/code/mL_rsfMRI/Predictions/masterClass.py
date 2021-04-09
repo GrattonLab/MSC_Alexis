@@ -20,6 +20,7 @@ from sklearn.preprocessing import StandardScaler #data scaling
 from sklearn import decomposition #PCA
 #import other python scripts for further anlaysis
 import reshape
+
 #import results
 import warnings
 warnings.filterwarnings("ignore")
@@ -107,10 +108,10 @@ def classifySS():
         sen_per_task.append(total_sen)
         spec_per_task.append(total_spec)
     dfSS['acc']=acc_scores_per_task
-    dfSS['spec']=spec_per_task
-    dfSS['sen']=sen_per_task
+    #dfSS['spec']=spec_per_task
+    #dfSS['sen']=sen_per_task
     #save accuracy
-    dfSS.to_csv(outDir+'acc/SS/acc.csv',index=False)
+    dfSS.to_csv(outDir+'acc/SS/sep_task_acc.csv',index=False)
 def classifyBS():
     """
     Classifying between subjects and task (BS)
@@ -214,14 +215,15 @@ def model(train_sub, test_sub, train_task, test_task):
     taskFC=reshape.matFiles(dataDir+train_task+'/'+train_sub+'_parcel_corrmat.mat')
     #if your subs are the same
     if train_sub==test_sub:
-        tmp_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat')
+        restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
+        #tmp_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/half/'+train_sub+'_parcel_corrmat.mat')
         #Split rest into a test and training set 10 test 10 train
-        restFC=tmp_restFC[:10]
-        test_restFC=tmp_restFC[10:]
+        #restFC=tmp_restFC[:10]
+        #test_restFC=tmp_restFC[10:]
 
         #restFC, test_restFC=train_test_split(restFC, test_size=.5)
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
-        total_score, total_sen, total_spec=CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
+        total_score, total_sen, total_spec=SS_folds(clf, taskFC, restFC, test_taskFC)
 
     else:
         restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
@@ -306,6 +308,64 @@ def CV_folds(clf,taskFC, restFC, test_taskFC, test_restFC):
     df['outer_spec']=spec_score
     total_spec=df['outer_spec'].mean()
     return total_score, total_sen, total_spec
+def SS_folds(clf,taskFC, restFC, test_taskFC):
+    """
+    Cross validation to train and test using nested loops
+
+    Parameters
+    -----------
+    clf : obj
+        Machine learning algorithm
+    analysis : str
+        Analysis type
+    taskFC, restFC, test_taskFC, test_restFC : array_like
+        Input arrays, training and testing set of task and rest FC
+    Returns
+    -----------
+    total_score : float
+        Average accuracy across folds
+    acc_score : list
+        List of accuracy for each outer fold
+    """
+
+    loo = LeaveOneOut()
+    taskSize=taskFC.shape[0]
+    restSize=restFC.shape[0]
+    t = np.ones(taskSize, dtype = int)
+    r=np.zeros(restSize, dtype=int)
+    df=pd.DataFrame()
+    acc_score=[]
+    spec_score=[]
+    sen_score=[]
+    #fold each training set
+    for train_index, test_index in loo.split(taskFC):
+        Xtrain_rest=restFC[train_index]
+        Xtrain_task=taskFC[train_index]
+        ytrain_rest=r[train_index]
+        ytrain_task=t[train_index]
+        X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
+        y_tr = np.concatenate((ytrain_task,ytrain_rest))
+        clf.fit(X_tr,y_tr)
+        tmpdf=pd.DataFrame()
+        acc_scores_per_fold=[]
+        #sensitivity and specificity per fold
+        sen_per_fold=[]
+        spec_per_fold=[]
+        #fold each testing set
+        for t_index, te_index in loo.split(test_taskFC):
+            Xtest=test_taskFC[te_index]
+            y_te=np.array([1])
+            #test set
+            #Get accuracy of model
+            ACCscores=clf.score(Xtest,y_te)
+            acc_scores_per_fold.append(ACCscores)
+        tmpdf['inner_fold']=acc_scores_per_fold
+        score=tmpdf['inner_fold'].mean()
+        acc_score.append(score)
+    df['outer_fold']=acc_score
+    total_score=df['outer_fold'].mean()
+
+    return total_score, sen_score, spec_score
 
 def classifyAll():
     """
@@ -320,6 +380,7 @@ def classifyAll():
         Dataframe consisting of average accuracy across all subjects
 
     """
+
     acc_scores_per_sub=[]
     sen_scores_per_sub=[]
     spec_scores_per_sub=[]
@@ -329,6 +390,7 @@ def classifyAll():
     df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
 
     for index, row in df.iterrows():
+
         diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
         acc_scores_per_sub.append(diff_score)
         acc_scores_cv.append(same_score)
@@ -336,13 +398,16 @@ def classifyAll():
         spec_scores_cv.append(CV_spec_score)
         sen_scores_per_sub.append(DS_sens_score)
         spec_scores_per_sub.append(DS_spec_score)
+
     df['cv_acc']=acc_scores_cv
     df['cv_sen']=sen_scores_cv
     df['cv_spec']=spec_scores_cv
     df['acc']=acc_scores_per_sub
     df['ds_sen']=sen_scores_per_sub
     df['ds_spec']=spec_scores_per_sub
-    df.to_csv(outDir+'acc/ALL/shufflekFold_acc.csv',index=False)
+    #df.to_csv(outDir+'acc/ALL/shufflekFold_acc.csv',index=False)
+    df.to_csv(outDir+'acc/ALL/LOO_acc.csv',index=False)
+
 
 def modelAll(train_sub, test_sub):
     """
@@ -371,9 +436,6 @@ def modelAll(train_sub, test_sub):
     glassFC=reshape.matFiles(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat')
     motFC=reshape.matFiles(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat')
     restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
-    #taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
-    #to have more control over sessions
-    #taskFC=np.dstack((memFC,semFC,glassFC,motFC))#10x55278x4
     restFC=np.reshape(restFC,(10,4,55278)) #reshape to gather correct days
     #test sub
     test_memFC=reshape.matFiles(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat')
@@ -382,7 +444,7 @@ def modelAll(train_sub, test_sub):
     test_motFC=reshape.matFiles(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat')
     test_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
     test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
-    #return taskFC,restFC, test_taskFC,test_restFC
+
     diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_restFC)
     return diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
 
@@ -403,8 +465,8 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     acc_score : list
         List of accuracy for each outer fold
     """
-
-    kf = KFold(n_splits=5,shuffle=True)
+    loo = LeaveOneOut()
+    #kf = KFold(n_splits=5)
     #reshape rest to get specific days
 
     #having more control over sessions will require labeling within loop
@@ -419,6 +481,10 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     testT= np.ones(test_taskSize, dtype = int)
     testR= np.zeros(test_restSize, dtype = int)
 
+    taskScore=[]
+    restScore=[]
+    testTScore=[]
+    testRScore=[]
     CVacc=[]
     CVspec=[]
     CVsen=[]
@@ -429,13 +495,17 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     #fold each training set
     if train_sub=='MSC03':
         split=np.empty((8,55278))
+        kf = KFold(8)
         #xtrainSize=24
         #xtestSize=4
     elif train_sub=='MSC06' or train_sub=='MSC07':
         split=np.empty((9,55278))
+        kf = KFold(9)
     else:
         split=np.empty((10,55278))
-    for train_index, test_index in kf.split(split):
+        kf = KFold(10)
+
+    for train_index, test_index in loo.split(split):
 
         memtrain, memval=memFC[train_index], memFC[test_index]
         semtrain, semval=semFC[train_index], semFC[test_index]
@@ -450,19 +520,22 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
         ytrain_rest=np.zeros(Xtrain_rest.shape[0], dtype=int)
         yval_task = np.ones(Xval_task.shape[0], dtype = int)
         yval_rest=np.zeros(Xval_rest.shape[0], dtype=int)
-        """
-        #old way that didn't account for days
-        Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
-        Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
-        ytrain_rest, yval_rest=r[train_index], r[test_index]
-        ytrain_task, yval_task=t[train_index], t[test_index]
-        """
+
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
         X_val=np.concatenate((Xval_task, Xval_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         y_val=np.concatenate((yval_task, yval_rest))
         clf.fit(X_tr,y_tr)
+        ts=clf.score(Xval_task, yval_task)
+        rs=clf.score(Xval_rest, yval_rest)
+        taskScore.append(ts)
+        restScore.append(rs)
+        testTask=clf.score(test_taskFC, testT)
+        testRest=clf.score(test_restFC, testR)
+        testTScore.append(testTask)
+        testRScore.append(testRest)
         #cross validation
+
         y_pred=clf.predict(X_val)
         #Test labels and predicted labels to calculate sensitivity specificity
         tn, fp, fn, tp=confusion_matrix(y_val, y_pred).ravel()
@@ -473,11 +546,13 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
         CVacc.append(CV_score)
         CVspec.append(CV_specificity)
         CVsen.append(CV_sensitivity)
+        #fold each testing set
+
         tmpdf=pd.DataFrame()
         acc_scores_per_fold=[]
         sen_scores_per_fold=[]
         spec_scores_per_fold=[]
-        #fold each testing set
+
         for t_index, te_index in kf.split(test_taskFC):
             Xtest_rest=test_restFC[te_index]
             Xtest_task=test_taskFC[te_index]
@@ -496,6 +571,7 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
             acc_scores_per_fold.append(ACCscores)
             sen_scores_per_fold.append(DS_sensitivity)
             spec_scores_per_fold.append(DS_specificity)
+
         tmpdf['inner_fold']=acc_scores_per_fold
         tmpdf['DS_sen']=sen_scores_per_fold
         tmpdf['DS_spec']=spec_scores_per_fold
@@ -505,6 +581,7 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
         acc_score.append(score)
         DSspec.append(spec)
         DSsen.append(sen)
+
     df['cv']=CVacc
     df['CV_sen']=CVsen
     df['CV_spec']=CVspec
@@ -518,6 +595,8 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     CV_spec_score=df['CV_spec'].mean()
     DS_sens_score=df['DS_sen'].mean()
     DS_spec_score=df['DS_spec'].mean()
+
+
     return diff_sub_score, same_sub_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
 
 

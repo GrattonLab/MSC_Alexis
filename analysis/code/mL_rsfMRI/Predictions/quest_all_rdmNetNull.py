@@ -270,7 +270,6 @@ def K_folds(train_sub, number,clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC
     diff_sub_score=df['ds'].mean()
     return diff_sub_score, same_sub_score
 def runAll():
-
     ALL_df=pd.DataFrame()
     for nullNet in netRoi:
         number=netRoi[nullNet]

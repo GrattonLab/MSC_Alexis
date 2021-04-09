@@ -234,19 +234,20 @@ def runScript():
     #generate log sample
     #1000 points for log selection
     #loop through 125 times to generate 8*125=1000 samples per log point
-    featureSize=np.logspace(1, 4.7, num=1000,dtype=int)
-    for number in featureSize:
-            #generate a new index
-        idx=np.random.randint(55278, size=(number))
-        DS=classifyDS(idx, number)
-        DS_df=pd.concat([DS_df,DS])
-        SS=classifySS(idx, number)
-        SS_df=pd.concat([SS_df,SS])
-        BS=classifyBS(idx, number)
-        BS_df=pd.concat([BS_df,BS])
-        CV=classifyCV(idx, number)
-        CV_df=pd.concat([CV_df,CV])
-        print('Finished with '+str(number))
+    featureSize=np.logspace(1, 4.7, num=39,dtype=int)
+    for i in range(100):
+        for number in featureSize:
+                #generate a new index
+            idx=np.random.randint(55278, size=(number))
+            DS=classifyDS(idx, number)
+            DS_df=pd.concat([DS_df,DS])
+            SS=classifySS(idx, number)
+            SS_df=pd.concat([SS_df,SS])
+            BS=classifyBS(idx, number)
+            BS_df=pd.concat([BS_df,BS])
+            CV=classifyCV(idx, number)
+            CV_df=pd.concat([CV_df,CV])
+        print('Finished with '+str(i)+' in iteration 100')
     DS_df.to_csv(outDir+'DS/acc.csv', index=False)
     SS_df.to_csv(outDir+'SS/acc.csv', index=False)
     BS_df.to_csv(outDir+'BS/acc.csv', index=False)

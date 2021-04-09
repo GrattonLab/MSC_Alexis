@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # In[ ]:
-
+from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import LeaveOneOut
 from sklearn.linear_model import RidgeClassifier
@@ -13,11 +13,14 @@ import itertools
 import scipy.io
 import random
 from sklearn.model_selection import KFold
+import os
+import sys
 #import other python scripts for further anlaysis
 # Initialization of directory information:
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
-dataDir = '/projects/p31240/'
-outDir = '/projects/p31240/rdmNetwork/'
+thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
+dataDir = thisDir + 'data/mvpa_data/'
+outDir = thisDir + 'output/results/rdmNetwork/'
 # Subjects and tasks
 taskList=['semantic','glass', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -25,6 +28,75 @@ subsComb=(list(itertools.permutations(subList, 2)))
 #generate log sample
 #1000 points for log selection
 #loop through 125 times to generate 8*125=1000 samples per log point
+def run_all():
+    featureSize=np.logspace(1, 4.7, num=39,dtype=int)
+    ALL_df=pd.DataFrame()
+    for number in featureSize:
+        for i in range(100):
+            #generate a new index
+            idx=np.random.randint(55278, size=(number))
+            ALL=modelAll(idx, number)
+            ALL_df=pd.concat([ALL_df,ALL])
+        print('Finished with '+str(i)+ ' log sample out of 39')
+    ALL_df.to_csv(outDir+'ALL/acc.csv', index=False)
+
+def AllSubFiles(test_sub,feat):
+    """
+    Return task and rest FC all subs
+    Parameters
+    -----------
+    test_sub: Array of testing subs
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC of all testing subs
+    """
+    a_memFC=randFeats(dataDir+'mem/'+test_sub[0]+'_parcel_corrmat.mat',feat)
+    a_semFC=randFeats(dataDir+'semantic/'+test_sub[0]+'_parcel_corrmat.mat',feat)
+    a_glassFC=randFeats(dataDir+'glass/'+test_sub[0]+'_parcel_corrmat.mat',feat)
+    a_motFC=randFeats(dataDir+'motor/'+test_sub[0]+'_parcel_corrmat.mat',feat)
+    a_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[0]+'_parcel_corrmat.mat',feat)
+
+    b_memFC=randFeats(dataDir+'mem/'+test_sub[1]+'_parcel_corrmat.mat',feat)
+    b_semFC=randFeats(dataDir+'semantic/'+test_sub[1]+'_parcel_corrmat.mat',feat)
+    b_glassFC=randFeats(dataDir+'glass/'+test_sub[1]+'_parcel_corrmat.mat',feat)
+    b_motFC=randFeats(dataDir+'motor/'+test_sub[1]+'_parcel_corrmat.mat',feat)
+    b_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[1]+'_parcel_corrmat.mat',feat)
+
+    c_memFC=randFeats(dataDir+'mem/'+test_sub[2]+'_parcel_corrmat.mat',feat)
+    c_semFC=randFeats(dataDir+'semantic/'+test_sub[2]+'_parcel_corrmat.mat',feat)
+    c_glassFC=randFeats(dataDir+'glass/'+test_sub[2]+'_parcel_corrmat.mat',feat)
+    c_motFC=randFeats(dataDir+'motor/'+test_sub[2]+'_parcel_corrmat.mat',feat)
+    c_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[2]+'_parcel_corrmat.mat',feat)
+
+    d_memFC=randFeats(dataDir+'mem/'+test_sub[3]+'_parcel_corrmat.mat',feat)
+    d_semFC=randFeats(dataDir+'semantic/'+test_sub[3]+'_parcel_corrmat.mat',feat)
+    d_glassFC=randFeats(dataDir+'glass/'+test_sub[3]+'_parcel_corrmat.mat',feat)
+    d_motFC=randFeats(dataDir+'motor/'+test_sub[3]+'_parcel_corrmat.mat',feat)
+    d_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[3]+'_parcel_corrmat.mat',feat)
+
+    e_memFC=randFeats(dataDir+'mem/'+test_sub[4]+'_parcel_corrmat.mat',feat)
+    e_semFC=randFeats(dataDir+'semantic/'+test_sub[4]+'_parcel_corrmat.mat',feat)
+    e_glassFC=randFeats(dataDir+'glass/'+test_sub[4]+'_parcel_corrmat.mat',feat)
+    e_motFC=randFeats(dataDir+'motor/'+test_sub[4]+'_parcel_corrmat.mat',feat)
+    e_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[4]+'_parcel_corrmat.mat',feat)
+
+    f_memFC=randFeats(dataDir+'mem/'+test_sub[5]+'_parcel_corrmat.mat',feat)
+    f_semFC=randFeats(dataDir+'semantic/'+test_sub[5]+'_parcel_corrmat.mat',feat)
+    f_glassFC=randFeats(dataDir+'glass/'+test_sub[5]+'_parcel_corrmat.mat',feat)
+    f_motFC=randFeats(dataDir+'motor/'+test_sub[5]+'_parcel_corrmat.mat',feat)
+    f_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[5]+'_parcel_corrmat.mat',feat)
+
+    g_memFC=randFeats(dataDir+'mem/'+test_sub[6]+'_parcel_corrmat.mat',feat)
+    g_semFC=randFeats(dataDir+'semantic/'+test_sub[6]+'_parcel_corrmat.mat',feat)
+    g_glassFC=randFeats(dataDir+'glass/'+test_sub[6]+'_parcel_corrmat.mat',feat)
+    g_motFC=randFeats(dataDir+'motor/'+test_sub[6]+'_parcel_corrmat.mat',feat)
+    g_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub[6]+'_parcel_corrmat.mat',feat)
+
+
+    taskFC=np.concatenate((a_memFC,a_semFC,a_glassFC,a_motFC,b_memFC,b_semFC,b_glassFC,b_motFC,c_memFC,c_semFC,c_glassFC,c_motFC,d_memFC,d_semFC,d_glassFC,d_motFC,e_memFC,e_semFC,e_glassFC,e_motFC,f_memFC,f_semFC,f_glassFC,f_motFC,g_memFC,g_semFC,g_glassFC,g_motFC))
+    restFC=np.concatenate((a_restFC,b_restFC,c_restFC,d_restFC,e_restFC,f_restFC,g_restFC))
+
+    return taskFC, restFC
 
 
 
@@ -87,32 +159,8 @@ def randFeats(df, idx):
         featDS[sess]=f
     return featDS
 
-def classifyAll(feat,number):
-    """
-    Classifying different subjects along available data rest split into 40 samples to match with task
 
-    Parameters
-    -------------
-
-    Returns
-    -------------
-    df : DataFrame
-        Dataframe consisting of average accuracy across all subjects
-
-    """
-    acc_scores_per_sub=[]
-    acc_scores_cv=[]
-    df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
-    for index, row in df.iterrows():
-        diff_score, same_score =modelAll(feat,number, train_sub=row['train_sub'], test_sub=row['test_sub'])
-        acc_scores_per_sub.append(diff_score)
-        acc_scores_cv.append(same_score)
-    df['cv_acc']=acc_scores_cv
-    df['acc']=acc_scores_per_sub
-    df['features']=number
-    return df
-
-def modelAll(feat,number,train_sub, test_sub):
+def modelAll(feat,number):
     """
     Preparing machine learning model with appropriate data
 
@@ -132,27 +180,34 @@ def modelAll(feat,number,train_sub, test_sub):
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
     clf=RidgeClassifier()
-    df=pd.DataFrame()
     #train sub
-    memFC=randFeats(dataDir+'mem/'+train_sub+'_parcel_corrmat.mat',feat)
-    semFC=randFeats(dataDir+'semantic/'+train_sub+'_parcel_corrmat.mat',feat)
-    glassFC=randFeats(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat',feat)
-    motFC=randFeats(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat',feat)
-    restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat',feat)
-    restFC=np.reshape(restFC,(10,4,number)) #reshape to gather correct days
-    #taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
-    #test sub
-    test_memFC=randFeats(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat',feat)
-    test_semFC=randFeats(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat',feat)
-    test_glassFC=randFeats(dataDir+'glass/'+test_sub+'_parcel_corrmat.mat',feat)
-    test_motFC=randFeats(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat',feat)
-    test_restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat',feat)
-    test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
-    #return taskFC,restFC, test_taskFC,test_restFC
-    diff_score, same_score=K_folds(train_sub,number, clf,  memFC,semFC,glassFC,motFC,  restFC, test_taskFC, test_restFC)
-    return diff_score, same_score
+    clf=RidgeClassifier(max_iter=10000)
+    master_df=pd.DataFrame()
+    data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
+    loo = LeaveOneOut()
+    for  test, train in loo.split(data): #train on one sub test on the rest
+        tmp=pd.DataFrame()
+        train_sub=data[train]
+        test_sub=data[test]
+    #train sub
+        memFC=randFeats(dataDir+'mem/'+train_sub[0]+'_parcel_corrmat.mat',feat)
+        semFC=randFeats(dataDir+'semantic/'+train_sub[0]+'_parcel_corrmat.mat',feat)
+        glassFC=randFeats(dataDir+'glass/'+train_sub[0]+'_parcel_corrmat.mat',feat)
+        motFC=randFeats(dataDir+'motor/'+train_sub[0]+'_parcel_corrmat.mat',feat)
+        restFC=randFeats(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub[0]+'_parcel_corrmat.mat',feat) #keep tasks seperated in order to collect the right amount of days
+        nsize=restFC.shape[1]
+        restFC=np.reshape(restFC,(10,4,nsize)) #reshape to gather correct days
+        #test sub
+        test_taskFC,test_restFC=AllSubFiles(test_sub,feat)
+        diff_score, same_score=K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_restFC)
+        tmp['train']=train_sub
+        tmp['same_sub']=same_score
+        tmp['diff_sub']=diff_score
+        tmp['feat']=number
+        master_df=pd.concat([master_df,tmp])
+    return master_df
 
-def K_folds(train_sub,number, clf,  memFC,semFC,glassFC,motFC, restFC, test_taskFC, test_restFC):
+def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_restFC):
     """
     Cross validation to train and test using nested loops
 
@@ -171,19 +226,16 @@ def K_folds(train_sub,number, clf,  memFC,semFC,glassFC,motFC, restFC, test_task
     """
 
     kf = KFold(n_splits=5,shuffle=True)
-    """
-    taskSize=taskFC.shape[0]
-    restSize=restFC.shape[0]
-    t = np.ones(taskSize, dtype = int)
-    r=np.zeros(restSize, dtype=int)
-    """
+    number=memFC.shape[1]
     test_taskSize=test_taskFC.shape[0]
     test_restSize=test_restFC.shape[0]
     testT= np.ones(test_taskSize, dtype = int)
     testR= np.zeros(test_restSize, dtype = int)
+    X_te=np.concatenate((test_taskFC, test_restFC))
+    y_te=np.concatenate((testT, testR))
     CVacc=[]
     df=pd.DataFrame()
-    acc_score=[]
+    DSacc=[]
     #fold each training set
     if train_sub=='MSC03':
         split=np.empty((8,number))
@@ -212,46 +264,20 @@ def K_folds(train_sub,number, clf,  memFC,semFC,glassFC,motFC, restFC, test_task
         X_val=np.concatenate((Xval_task, Xval_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         y_val=np.concatenate((yval_task, yval_rest))
+        scaler = preprocessing.StandardScaler().fit(X_tr)
+        scaler.transform(X_tr)
         clf.fit(X_tr,y_tr)
-        #cross validation
-        y_pred=clf.predict(X_val)
-        #Test labels and predicted labels to calculate sensitivity specificity
-        #get accuracy
+        scaler.transform(X_val)
         CV_score=clf.score(X_val, y_val)
         CVacc.append(CV_score)
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
-        #fold each testing set
-        for t_index, te_index in kf.split(test_taskFC):
-            Xtest_rest=test_restFC[te_index]
-            Xtest_task=test_taskFC[te_index]
-            X_te=np.concatenate((Xtest_task, Xtest_rest))
-            ytest_task=testT[te_index]
-            ytest_rest=testR[te_index]
-            y_te=np.concatenate((ytest_task, ytest_rest))
-            #test set
-            y_pred_testset=clf.predict(X_te)
-            #Test labels and predicted labels to calculate sensitivity specificity
-            #Get accuracy of model
-            ACCscores=clf.score(X_te,y_te)
-            acc_scores_per_fold.append(ACCscores)
-        tmpdf['inner_fold']=acc_scores_per_fold
-        score=tmpdf['inner_fold'].mean()
-        acc_score.append(score)
+        scaler.transform(X_te)
+        score=clf.score(X_te,y_te)
+        DSacc.append(score)
     df['cv']=CVacc
     #Different sub outer acc
-    df['outer_fold']=acc_score
+    df['ds']=DSacc
     same_sub_score=df['cv'].mean()
-    diff_sub_score=df['outer_fold'].mean()
-    return diff_sub_score, same_sub_score
-
-
-featureSize=np.logspace(1, 4.7, num=1000,dtype=int)
-ALL_df=pd.DataFrame()
-for number in featureSize:
-    #generate a new index
-    idx=np.random.randint(55278, size=(number))
-    ALL=classifyAll(idx, number)
-    ALL_df=pd.concat([ALL_df,ALL])
-    print('Finished with '+str(number))
-ALL_df.to_csv(outDir+'ALL/acc.csv', index=False)
+    diff_sub_score=df['ds'].mean()
+    same_sub=round(same_sub_score,2)
+    diff_sub=round(diff_sub_score,2)
+    return diff_sub, same_sub

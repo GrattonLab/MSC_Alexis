@@ -325,6 +325,7 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
         scaler.transform(X_tr)
         clf.fit(X_tr,y_tr)
         #get accuracy
+        scaler.transform(X_val)
         CV_score=clf.score(X_val, y_val)
         CVacc.append(CV_score)
         scaler.transform(X_te)

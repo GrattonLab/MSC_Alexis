@@ -2,8 +2,6 @@
 # coding: utf-8
 
 # In[ ]:
-
-
 import matlab.engine
 import scipy.io
 import pandas as pd
@@ -693,7 +691,7 @@ def getIndices():
     df_new.reset_index(inplace=True)
     return df_new
 
-def permuteIndices(taskFC,restFC,network):
+def permuteIndices(Xtrain_task,Xtrain_rest,network):
     """
     Permute rows of networks and switch tast and rest of that particular network
     Parameters
@@ -708,20 +706,23 @@ def permuteIndices(taskFC,restFC,network):
     ------------
     taskFC, restFC : Array of task and rest FC permuting specific rows
     """
+    XtrainNew_task=Xtrain_task.copy()
+    XtrainNew_rest=Xtrain_rest.copy()
     indices=getIndices()
     index=indices.index
     condition=indices['level_0']==network
     ROI=index[condition]
     ROI_list=ROI.tolist()
-    tmpTask=taskFC[:,ROI_list]
-    tmpRest=restFC[:,ROI_list]
+    tmpTask=XtrainNew_task[:,ROI_list]
+    tmpRest=XtrainNew_rest[:,ROI_list]
     #permute values
     tmpTask_permute=np.random.permutation(tmpTask)
     tmpRest_permute=np.random.permutation(tmpRest)
     #Now switch
-    taskFC[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
-    restFC[:,ROI_list]=tmpTask_permute
-    return taskFC,restFC
+    XtrainNew_task[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    XtrainNew_rest[:,ROI_list]=tmpTask_permute
+    X=np.concatenate((XtrainNew_task, XtrainNew_rest))
+    return X
 
 def AllSubFiles(test_sub):
     """
@@ -782,7 +783,7 @@ def AllSubFiles(test_sub):
     return taskFC, restFC
 
 
-def permuteIndicesRandom(taskFC,restFC,network):
+def permuteIndicesRandom(Xtrain_task,Xtrain_rest,network):
     """
     Permute rows of networks and switch tast and rest of that particular network
     Parameters
@@ -797,23 +798,27 @@ def permuteIndicesRandom(taskFC,restFC,network):
     ------------
     taskFC, restFC : Array of task and rest FC permuting specific rows
     """
+    XtrainNew_task=Xtrain_task.copy()
+    XtrainNew_rest=Xtrain_rest.copy()
     #netRoi=dict([('unassign',14808),('default', 10824),('visual',8736),('fp', 4620),('dan',5264),('van',3151),('salience', 494),('co', 4060),('sm', 2375),('sm-lat', 316),('auditory', 564),('pmn',45),('pon',21)])
     #number=netRoi[network]
     #idx=np.random.randint(55278, size=(number))#will generate random index to sample from
     idx=np.random.randint(55278, size=(network))
-    tmpTask=taskFC[:,idx]
-    tmpRest=restFC[:,idx]
+    tmpTask=XtrainNew_task[:,idx]
+    tmpRest=XtrainNew_rest[:,idx]
     #permute values
     tmpTask_permute=np.random.permutation(tmpTask)
     tmpRest_permute=np.random.permutation(tmpRest)
     #Now switch
-    taskFC[:,idx]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
-    restFC[:,idx]=tmpTask_permute
-    return taskFC,restFC
+    XtrainNew_task[:,idx]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    XtrainNew_rest[:,idx]=tmpTask_permute
+    X=np.concatenate((XtrainNew_task, XtrainNew_rest))
+    return X
 
 
 
-def permuteIndices_byRow(taskFC,restFC,rowID):
+
+def permuteIndices_byRow(Xtrain_task,Xtrain_rest,rowID):
     """
     Permute rows of networks and switch tast and rest
     Parameters
@@ -828,17 +833,55 @@ def permuteIndices_byRow(taskFC,restFC,rowID):
     ------------
     taskFC, restFC : Array of task and rest FC permuting specific rows
     """
+    XtrainNew_task=Xtrain_task.copy()
+    XtrainNew_rest=Xtrain_rest.copy()
     indices=getIndices()
     index=indices.index
     condition=indices['level_1']==rowID
     ROI=index[condition]
     ROI_list=ROI.tolist()
-    tmpTask=taskFC[:,ROI_list]
-    tmpRest=restFC[:,ROI_list]
+    tmpTask=XtrainNew_task[:,ROI_list]
+    tmpRest=XtrainNew_rest[:,ROI_list]
+    tmpTask_permute=np.random.permutation(tmpTask)
+    tmpRest_permute=np.random.permutation(tmpRest)
+    #Now switch
+    XtrainNew_task[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    XtrainNew_rest[:,ROI_list]=tmpTask_permute
+    X=np.concatenate((XtrainNew_task, XtrainNew_rest))
+    return X
+
+
+
+
+def NULLpermuteIndices_byRow(Xtrain_task,Xtrain_rest,rowID):
+    """
+    Permute rows of networks and switch tast and rest
+    Parameters
+    -----------
+    taskFC: numpy array
+        nsess x ROI
+    restFC: numpy array
+        nsess x ROI
+    network: str
+        particular network of interest
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC permuting specific rows
+    """
+    XtrainNew_task=Xtrain_task.copy()
+    XtrainNew_rest=Xtrain_rest.copy()
+    indices=getIndices()
+    index=indices.index
+    condition=indices['level_1']!=rowID
+    ROI=index[condition]
+    ROI_list=ROI.tolist()
+    tmpTask=XtrainNew_task[:,ROI_list]
+    tmpRest=XtrainNew_rest[:,ROI_list]
     #permute values
     tmpTask_permute=np.random.permutation(tmpTask)
     tmpRest_permute=np.random.permutation(tmpRest)
     #Now switch
-    taskFC[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
-    restFC[:,ROI_list]=tmpTask_permute
-    return taskFC,restFC
+    XtrainNew_task[:,ROI_list]=tmpRest_permute #now we purposefully swap the permuted labels to the other task/rest FC
+    XtrainNew_rest[:,ROI_list]=tmpTask_permute
+    X=np.concatenate((XtrainNew_task, XtrainNew_rest))
+    return X
