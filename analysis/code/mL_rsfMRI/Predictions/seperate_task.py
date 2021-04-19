@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import cross_val_score
 import itertools
+from sklearn.svm import LinearSVC
 import scipy.io
 import random
 from sklearn.model_selection import KFold
@@ -22,8 +23,10 @@ from statistics import mean
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/results/acc/'
+outDir = thisDir + 'output/results/SVM/acc/'
 # Subjects and tasks
+splitDict=dict([('MSC01',10),('MSC02',10),('MSC03',8),('MSC04',10),('MSC05',10),('MSC06',9),('MSC07',9),('MSC10',10)])
+
 taskList=['semantic','glass', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 """
@@ -57,7 +60,7 @@ def SSmodel():
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
     taskData=np.array(['semantic','glass', 'motor','mem'], dtype='<U61')
-    clf=RidgeClassifier()
+    clf=LinearSVC()
     master_df=pd.DataFrame()
     data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
     loo = LeaveOneOut()
@@ -106,7 +109,7 @@ def BSmodel():
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
     taskData=np.array(['semantic','glass', 'motor','mem'], dtype='<U61')
-    clf=RidgeClassifier()
+    clf=LinearSVC()
     master_df=pd.DataFrame()
     data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
     loo = LeaveOneOut()
@@ -157,7 +160,7 @@ def DSmodel():
     """
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
-    clf=RidgeClassifier()
+    clf=LinearSVC()
     master_df=pd.DataFrame()
     data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
     loo = LeaveOneOut()
@@ -420,7 +423,7 @@ def modelAll():
     """
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
-    clf=RidgeClassifier()
+    clf=LinearSVC()
     #train sub
     master_df=pd.DataFrame()
     data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
@@ -479,16 +482,8 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_
     DSTacc=[]
     DSRacc=[]
     #fold each training set
-
-    if train_sub=='MSC03':
-        split=np.empty((8,number))
-        #xtrainSize=24
-        #xtestSize=4
-    elif train_sub=='MSC06' or train_sub=='MSC07':
-        split=np.empty((9,number))
-    else:
-        split=np.empty((10,number)
-
+    session=splitDict[train_sub[0]]
+    split=np.empty((session, 55278))
     for train_index, test_index in loo.split(split):
         memtrain, memval=memFC[train_index], memFC[test_index]
         semtrain, semval=semFC[train_index], semFC[test_index]

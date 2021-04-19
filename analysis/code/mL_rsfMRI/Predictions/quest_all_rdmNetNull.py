@@ -215,7 +215,7 @@ def K_folds(train_sub, number,clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC
         List of accuracy for each outer fold
     """
 
-    kf = KFold(n_splits=5,shuffle=True)
+    kf = LeaveOneOut()
     """
     taskSize=taskFC.shape[0]
     restSize=restFC.shape[0]

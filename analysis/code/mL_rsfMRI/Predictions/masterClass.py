@@ -45,6 +45,8 @@ SSvars=list(itertools.product(list(subList),list(tasksComb)))
 BSvars=list(itertools.product(list(subsComb),list(tasksComb)))
 #CV combination
 CVvars=list(itertools.product(list(subList),list(taskList)))
+splitDict=dict([('MSC01',10),('MSC02',10),('MSC03',8),('MSC04',10),('MSC05',10),('MSC06',9),('MSC07',9),('MSC10',10)])
+
 
 """
 Each function declares the type of analysis you wanted to run. DS--different subject same task; SS--same subject different task; BS--different subject different task.
@@ -111,7 +113,7 @@ def classifySS():
     #dfSS['spec']=spec_per_task
     #dfSS['sen']=sen_per_task
     #save accuracy
-    dfSS.to_csv(outDir+'acc/SS/sep_task_acc.csv',index=False)
+    #dfSS.to_csv(outDir+'acc/SS/acc.csv',index=False)
 def classifyBS():
     """
     Classifying between subjects and task (BS)
@@ -493,17 +495,8 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     DSspec=[]
     DSsen=[]
     #fold each training set
-    if train_sub=='MSC03':
-        split=np.empty((8,55278))
-        kf = KFold(8)
-        #xtrainSize=24
-        #xtestSize=4
-    elif train_sub=='MSC06' or train_sub=='MSC07':
-        split=np.empty((9,55278))
-        kf = KFold(9)
-    else:
-        split=np.empty((10,55278))
-        kf = KFold(10)
+    session=splitDict[train_sub[0]]
+    split=np.empty((session, 55278))
 
     for train_index, test_index in loo.split(split):
 

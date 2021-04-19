@@ -9,6 +9,7 @@ from sklearn.linear_model import RidgeClassifier
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import cross_val_score
+from sklearn import preprocessing
 import itertools
 import scipy.io
 import random
@@ -69,9 +70,12 @@ def SSmodel(idx):
             train_sub=data[train]
         #train sub
             taskFC=reshape.randFeats(dataDir+trainT[0]+'/'+train_sub[0]+'_parcel_corrmat.mat',idx)
-            restFC=reshape.randFeats(dataDir+'rest/'+train_sub[0]+'_parcel_corrmat.mat',idx) #keep tasks seperated in order to collect the right amount of days
-            test_taskFC,test_restFC=AllSubFiles_SS(train_sub,testT,idx)
-            same_sub, diff_sub=SSfolds(clf, taskFC,restFC, test_taskFC,test_restFC)
+            tmp_restFC=reshape.randFeats(dataDir+'rest/corrmats_timesplit/half/'+train_sub[0]+'_parcel_corrmat.mat',idx)
+            #Split rest into a test and training set 10 test 10 train
+            restFC=tmp_restFC[:10]
+            test_restFC=tmp_restFC[10:]
+            test_taskFC=AllSubFiles_SS(train_sub,testT,idx)
+            same_sub, diff_sub=folds(clf, taskFC,restFC, test_taskFC,test_restFC)
             tmp['train']=train_sub
             tmp['task']=trainT
             tmp['same_sub']=same_sub
@@ -219,7 +223,11 @@ def folds(clf,taskFC, restFC, test_taskFC, test_restFC):
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         Xval=np.concatenate((Xval_task,Xval_rest))
         yval=np.concatenate((yval_task,yval_rest))
+        scaler = preprocessing.StandardScaler().fit(X_tr)
+        scaler.transform(X_tr)
         clf.fit(X_tr,y_tr)
+        scaler.transform(Xval)
+        scaler.transform(X_test)
         same=clf.score(Xval,yval)
         diff=clf.score(X_test,y_test)
 
@@ -271,7 +279,11 @@ def SSfolds(clf,taskFC, restFC, test_taskFC, test_restFC):
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         Xval=np.concatenate((Xval_task,Xval_rest))
         yval=np.concatenate((yval_task,yval_rest))
+        scaler = preprocessing.StandardScaler().fit(X_tr)
+        scaler.transform(X_tr)
         clf.fit(X_tr,y_tr)
+        scaler.transform(Xval)
+        scaler.transform(test_taskFC)
         same=clf.score(Xval,yval)
         diff=clf.score(test_taskFC,ytest)
 
@@ -296,9 +308,9 @@ def AllSubFiles_SS(train_sub,testT,idx):
     a_memFC=reshape.randFeats(dataDir+testT[0]+'/'+train_sub[0]+'_parcel_corrmat.mat',idx)
     a_semFC=reshape.randFeats(dataDir+testT[1]+'/'+train_sub[0]+'_parcel_corrmat.mat',idx)
     a_glassFC=reshape.randFeats(dataDir+testT[2]+'/'+train_sub[0]+'_parcel_corrmat.mat',idx)
-    restFC=reshape.randFeats(dataDir+'rest/'+train_sub[0]+'_parcel_corrmat.mat',idx)
+    #restFC=reshape.randFeats(dataDir+'rest/'+train_sub[0]+'_parcel_corrmat.mat',idx)
     taskFC=np.concatenate((a_memFC,a_semFC,a_glassFC))
-    return taskFC, restFC
+    return taskFC
 
 def AllSubFiles_BS(test_sub,testT,idx):
     """
@@ -553,7 +565,10 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         Xval=np.concatenate((Xval_task,Xval_rest))
         yval=np.concatenate((yval_task,yval_rest))
+        scaler = preprocessing.StandardScaler().fit(X_tr)
         clf.fit(X_tr,y_tr)
+        scaler.transform(Xval)
+        scaler.transform(Xtest)
         CV_score=clf.score(Xval, yval)
         CVacc.append(CV_score)
         score=clf.score(Xtest, ytest)
