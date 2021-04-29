@@ -689,6 +689,7 @@ def getIndices():
     df_new=pd.melt(df_ut,ignore_index=False)
     df_new.dropna(inplace=True)
     df_new.reset_index(inplace=True)
+    df_new.drop(columns=['value'],inplace=True)
     return df_new
 
 def permuteIndices(Xtrain_task,Xtrain_rest,network):

@@ -354,6 +354,7 @@ def SS_folds(clf,taskFC, restFC, test_taskFC):
         sen_per_fold=[]
         spec_per_fold=[]
         #fold each testing set
+
         for t_index, te_index in loo.split(test_taskFC):
             Xtest=test_taskFC[te_index]
             y_te=np.array([1])
