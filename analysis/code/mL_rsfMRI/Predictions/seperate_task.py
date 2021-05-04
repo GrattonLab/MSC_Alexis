@@ -24,6 +24,7 @@ from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
+from sklearn.metrics import plot_confusion_matrix
 #import other python scripts for further anlaysis
 # Initialization of directory information:
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
@@ -59,23 +60,29 @@ def classifySS():
     clf=RidgeClassifier()
     same_task=[]
     diff_task=[]
+    same_rest=[]
+    diff_rest=[]
     tmp_df=pd.DataFrame(SSvars, columns=['sub','task'])
     dfSS=pd.DataFrame()
     dfSS[['train_task','test_task']]=pd.DataFrame(tmp_df['task'].tolist())
     dfSS['sub']=tmp_df['sub']
     for index, row in dfSS.iterrows():
         taskFC=reshape.matFiles(dataDir+row['train_task']+'/'+row['sub']+'_parcel_corrmat.mat')
-        restFC=reshape.matFiles(dataDir+'rest/'+row['sub']+'_parcel_corrmat.mat')
+        tmp_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/half/'+row['sub']+'_parcel_corrmat.mat')
+        restFC=tmp_restFC[:10]
+        test_restFC=tmp_restFC[10:]
         testFC=reshape.matFiles(dataDir+row['test_task']+'/'+row['sub']+'_parcel_corrmat.mat')
         ytest=np.ones(testFC.shape[0])
-        same, diff=SS_folds(clf,taskFC,restFC,testFC,ytest)
-        same_task.append(same)
-        diff_task.append(diff)
-    dfSS['same_task']=same_task
-    dfSS['diff_task']=diff_task
-    #dfSS['spec']=spec_per_task
-    #dfSS['sen']=sen_per_task
-    #save accuracy
+        #same, diff=SS_folds(clf,taskFC,restFC,testFC,ytest)
+        same_Tsub, same_Rsub, diff_Tsub, diff_Rsub=folds(clf, taskFC,restFC, testFC,test_restFC)
+        same_task.append(same_Tsub)
+        diff_task.append(diff_Tsub)
+        same_rest.append(same_Rsub)
+        diff_rest.append(diff_Rsub)
+    dfSS['Same Task']=same_task
+    dfSS['Different Task']=diff_task
+    dfSS['Same Rest']=same_rest
+    dfSS['Different Rest']=diff_rest
     dfSS.to_csv(outDir+'SS/separate_broken_acc.csv',index=False)
 def SSmodel():
     """
@@ -117,15 +124,20 @@ def SSmodel():
         #train sub
             taskFC=reshape.matFiles(dataDir+trainT[0]+'/'+train_sub[0]+'_parcel_corrmat.mat')
             #ytask=np.ones(taskFC.shape[0])
-            restFC=reshape.matFiles(dataDir+'rest/'+train_sub[0]+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
+            #restFC=reshape.matFiles(dataDir+'rest/'+train_sub[0]+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
+            tmp_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/half/'+train_sub[0]+'_parcel_corrmat.mat')
+            #Split rest into a test and training set 10 test 10 train
+            restFC=tmp_restFC[:10]
+            test_restFC=tmp_restFC[10:]
             test_taskFC, ytask=AllSubFiles_SS(train_sub,testT)
-            same_Tsub, diff_Tsub=SS_folds(clf, taskFC,restFC, test_taskFC,ytask)
+            #same_Tsub, diff_Tsub=SS_folds(clf, taskFC,restFC, test_taskFC,ytask)
+            same_Tsub, same_Rsub, diff_Tsub, diff_Rsub=folds(clf, taskFC,restFC, test_taskFC,test_restFC)
             tmp['train']=train_sub
-            tmp['test_task']=trainT
-            tmp['same_subT']=same_Tsub
-            #tmp['same_subR']=same_Rsub
-            tmp['diffT']=diff_Tsub
-            #tmp['diff_subR']=diff_Rsub
+            tmp['train_task']=trainT
+            tmp['Same Rest']=same_Rsub
+            tmp['Different Rest']=diff_Rsub
+            tmp['Same Task']=same_Tsub
+            tmp['Different Task']=diff_Tsub
             master_df=pd.concat([master_df,tmp])
     master_df.to_csv(outDir+'SS/sep_acc.csv',index=False)
 def BSmodel():
@@ -495,13 +507,13 @@ def AllSubFiles(test_sub):
     ymem=np.ones(memFC.shape[0])
 
     semFC=np.concatenate((a_semFC,b_semFC,c_semFC,d_semFC,e_semFC,f_semFC,g_semFC))
-    ysem=np.full(semFC.shape[0],1)
+    ysem=np.full(semFC.shape[0],2)
 
     glassFC=np.concatenate((a_glassFC,b_glassFC,c_glassFC,d_glassFC,e_glassFC,f_glassFC,g_glassFC))
-    yglass=np.full(glassFC.shape[0],1)
+    yglass=np.full(glassFC.shape[0],3)
 
     motFC=np.concatenate((a_motFC,b_motFC,c_motFC,d_motFC,e_motFC,f_motFC,g_motFC))
-    ymot=np.full(motFC.shape[0],1)
+    ymot=np.full(motFC.shape[0],4)
     #rest, mem, sem, mot, glass
 
     testFC=np.concatenate((restFC,memFC,semFC,motFC, glassFC))
@@ -710,7 +722,13 @@ def multiclassAll():
         #restFC=np.reshape(restFC,(10,4,nsize)) #reshape to gather correct days
         #test sub
         testFC,ytest=AllSubFiles(test_sub)
-        same_Tsub, diff_Tsub,sameF,diffF,sameMCC, diffMCC=K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC, ytest)
+        same_Tsub, diff_Tsub,sameF,diffF,sameMCC, diffMCC, same_sub_CM, DS_cm=K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC, ytest)
+        plt.figure()
+        ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues)
+        plt.savefig(outDir+'ALL/MC/same/'+train_sub[0]+'.png', bbox_inches='tight')
+        plt.figure()
+        ax=ConfusionMatrixDisplay(DS_cm,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues)
+        plt.savefig(outDir+'ALL/MC/diff/'+train_sub[0]+'.png', bbox_inches='tight')
         tmp['train']=train_sub
         tmp['same_sub']=same_Tsub
         tmp['diff_sub']=diff_Tsub
@@ -719,8 +737,8 @@ def multiclassAll():
         tmp[['rest_CV', 'mem_CV', 'sem_CV', 'mot_CV', 'glass_CV']]=sameF.reshape(-1,len(sameF))
         tmp[['rest_DS', 'mem_DS', 'sem_DS', 'mot_DS', 'glass_DS']]=diffF.reshape(-1,len(diffF))
         master_df=pd.concat([master_df,tmp])
-    #return master_df
-    master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
+    #return same_sub_CM, DS_cm
+    #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
 
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
@@ -763,10 +781,12 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     split=np.empty((session, 55278))
     sameF1=np.empty((session,5))
     diffF1=np.empty((session,5))
+    same_sub_CM=np.zeros((5,5))
+    diff_sub_CM=np.empty((session,5,5))
+    diff_count=0
     CV_MCC=[]
     DS_MCC=[]
-    CV_confusion=np.empty((session,5))
-    DS_confusion=np.empty((session,5))
+
     for train_index, test_index in loo.split(split):
         memtrain, memval=memFC[train_index], memFC[test_index]
         ymemtrain, ymemval=ymem[train_index], ymem[test_index]
@@ -787,9 +807,11 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
         CVTacc.append(score)
         y_predict=clf.predict(Xval)
         score_same = f1_score(yval, y_predict, average=None)
-        #CV_multilabel=multilabel_confusion_matrix(yval, y_predict)
+        cm_same = confusion_matrix(yval, y_predict)
+        same_sub_CM=same_sub_CM+cm_same
         MCC_same = matthews_corrcoef(yval, y_predict)
         CV_MCC.append(MCC_same)
+        #restFC,memFC,semFC,motFC, glassFC
         #order is position rest, mem, sem, mot, glass
         sameF1[count]=score_same
         scoreT=clf.score(testFC,ytest)
@@ -797,7 +819,9 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
         y_pre=clf.predict(testFC)
         score_diff = f1_score(ytest, y_pre, average=None)
         MCC_diff = matthews_corrcoef(ytest, y_pre)
-        #DS_multilabel=multilabel_confusion_matrix(ytest, y_pre)
+        cm_diff = confusion_matrix(ytest, y_pre)
+        diff_sub_CM[diff_count]=cm_diff
+        diff_count=diff_count+1
         DS_MCC.append(MCC_diff)
         #order is position rest, mem, sem, mot, glass
         diffF1[count]=score_diff
@@ -808,7 +832,8 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     diff_Tsub=mean(DSTacc)
     diff_f=diffF1.mean(axis=0)
     diffMCC=mean(DS_MCC)
-    return same_Tsub,diff_Tsub,same_f, diff_f, sameMCC, diffMCC
+    DS_cm=diff_sub_CM.mean(axis=0,dtype=int)
+    return same_Tsub,diff_Tsub,same_f, diff_f, sameMCC, diffMCC, same_sub_CM, DS_cm
 
 
 def SS_inverse():
