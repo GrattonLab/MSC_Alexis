@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler #data scaling
 from sklearn import decomposition #PCA
 #import other python scripts for further anlaysis
 import reshape
-
+from statistics import mean
 #import results
 import warnings
 warnings.filterwarnings("ignore")
@@ -69,18 +69,24 @@ def classifyDS():
     acc_scores_per_task=[]
     sen_per_task=[]
     spec_per_task=[]
+    TPV_per_task=[]
+    RPV_per_task=[]
     tmp_df=pd.DataFrame(DSvars, columns=['sub','task'])
     dfDS=pd.DataFrame()
     dfDS[['train_sub','test_sub']]=pd.DataFrame(tmp_df['sub'].tolist())
     dfDS['task']=tmp_df['task']
     for index, row in dfDS.iterrows():
-        total_score, total_sen, total_spec=model(train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
+        total_score, total_sen, total_spec,total_TPV,total_RPV=model(train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
         acc_scores_per_task.append(total_score)
         sen_per_task.append(total_sen)
         spec_per_task.append(total_spec)
+        TPV_per_task.append(total_TPV)
+        RPV_per_task.append(total_RPV)
     dfDS['acc']=acc_scores_per_task
     dfDS['spec']=spec_per_task
     dfDS['sen']=sen_per_task
+    dfDS['TPV']=TPV_per_task
+    dfDS['RPV']=RPV_per_task
     dfDS.to_csv(outDir+'acc/DS/acc.csv',index=False)
 
 def classifySS():
@@ -131,18 +137,24 @@ def classifyBS():
     acc_scores_per_task=[]
     sen_per_task=[]
     spec_per_task=[]
+    TPV_per_task=[]
+    RPV_per_task=[]
     tmp_df=pd.DataFrame(BSvars, columns=['sub','task'])
     dfBS=pd.DataFrame()
     dfBS[['train_task','test_task']]=pd.DataFrame(tmp_df['task'].tolist())
     dfBS[['train_sub', 'test_sub']]=pd.DataFrame(tmp_df['sub'].tolist())
     for index, row in dfBS.iterrows():
-        total_score, total_sen, total_spec=model(train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
+        total_score, total_sen, total_spec,total_TPV,total_RPV=model(train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['train_task'], test_task=row['test_task'])
         acc_scores_per_task.append(total_score)
         sen_per_task.append(total_sen)
         spec_per_task.append(total_spec)
+        TPV_per_task.append(total_TPV)
+        RPV_per_task.append(total_RPV)
     dfBS['acc']=acc_scores_per_task
     dfBS['spec']=spec_per_task
     dfBS['sen']=sen_per_task
+    dfBS['TPV']=TPV_per_task
+    dfBS['RPV']=RPV_per_task
     #save accuracy
     dfBS.to_csv(outDir+'acc/BS/acc.csv',index=False)
 def classifyCV():
@@ -165,6 +177,8 @@ def classifyCV():
     acc_scores_per_task=[]
     CVspec=[]
     CVsen=[]
+    CVtpv=[]
+    CVrpv=[]
     for index, row in dfCV.iterrows():
         taskFC=reshape.matFiles(dataDir+row['task']+'/'+row['sub']+'_parcel_corrmat.mat')
         restFC=reshape.matFiles(dataDir+'rest/'+row['sub']+'_parcel_corrmat.mat')
@@ -176,16 +190,22 @@ def classifyCV():
         tn, fp, fn, tp=confusion_matrix(y_train, y_pred).ravel()
         CV_specificity= tn/(tn+fp)
         CV_sensitivity= tp/(tp+fn)
+        TPV=tp/(tp+fp)
+        RPV=tn/(tn+fn)
         #get accuracy
         mu=CVscores.mean()
         acc_scores_per_task.append(mu)
         CVspec.append(CV_specificity)
         CVsen.append(CV_sensitivity)
+        CVtpv.append(TPV)
+        CVrpv.append(RPV)
         #Get specificity/sensitivity measures
     #average acc per sub per tasks
     dfCV['acc']=acc_scores_per_task
     dfCV['spec']=CVspec
     dfCV['sen']=CVsen
+    dfCV['TPV']=CVtpv
+    dfCV['RPV']=CVrpv
     dfCV.to_csv(outDir+'acc/CV/acc.csv', index=False)
 def model(train_sub, test_sub, train_task, test_task):
     """
@@ -231,8 +251,8 @@ def model(train_sub, test_sub, train_task, test_task):
         restFC=reshape.matFiles(dataDir+'rest/'+train_sub+'_parcel_corrmat.mat')
         test_taskFC=reshape.matFiles(dataDir+test_task+'/'+test_sub+'_parcel_corrmat.mat')
         test_restFC=reshape.matFiles(dataDir+'rest/'+test_sub+'_parcel_corrmat.mat')
-        total_score, total_sen, total_spec=CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
-    return total_score, total_sen, total_spec
+        total_score, total_sen, total_spec,total_TPV,total_RPV=CV_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
+    return total_score, total_sen, total_spec,total_TPV,total_RPV
 
 def CV_folds(clf,taskFC, restFC, test_taskFC, test_restFC):
     """
@@ -259,10 +279,17 @@ def CV_folds(clf,taskFC, restFC, test_taskFC, test_restFC):
     restSize=restFC.shape[0]
     t = np.ones(taskSize, dtype = int)
     r=np.zeros(restSize, dtype=int)
-    df=pd.DataFrame()
+
+    y_test_task=np.ones(test_taskFC.shape[0])
+    y_test_rest=np.zeros(test_restFC.shape[0])
+    ytest=np.concatenate((y_test_task,y_test_rest))
+    Xtest=np.concatenate((test_taskFC,test_restFC))
     acc_score=[]
     spec_score=[]
     sen_score=[]
+    TPV_score=[]
+    RPV_score=[]
+
     #fold each training set
     for train_index, test_index in loo.split(taskFC):
         Xtrain_rest=restFC[train_index]
@@ -272,44 +299,27 @@ def CV_folds(clf,taskFC, restFC, test_taskFC, test_restFC):
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         clf.fit(X_tr,y_tr)
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
-        #sensitivity and specificity per fold
-        sen_per_fold=[]
-        spec_per_fold=[]
-        #fold each testing set
-        for t_index, te_index in loo.split(test_taskFC):
-            Xtest_rest=test_restFC[te_index]
-            Xtest_task=test_taskFC[te_index]
-            X_te=np.concatenate((Xtest_task, Xtest_rest))
-            y_te=np.array([1, 0])
-            #test set
-            y_pre=clf.predict(X_te)
-            #calculate sensitivity/specificity
-            tn, fp, fn, tp=confusion_matrix(y_te, y_pre).ravel()
-            specificity= tn/(tn+fp)
-            sensitivity= tp/(tp+fn)
-            #Get accuracy of model
-            ACCscores=clf.score(X_te,y_te)
-            acc_scores_per_fold.append(ACCscores)
-            sen_per_fold.append(sensitivity)
-            spec_per_fold.append(specificity)
-        tmpdf['inner_sens']=sen_per_fold
-        sens=tmpdf['inner_sens'].mean()
-        tmpdf['inner_spec']=spec_per_fold
-        spec=tmpdf['inner_spec'].mean()
-        tmpdf['inner_fold']=acc_scores_per_fold
-        score=tmpdf['inner_fold'].mean()
-        acc_score.append(score)
-        spec_score.append(spec)
-        sen_score.append(sens)
-    df['outer_fold']=acc_score
-    total_score=df['outer_fold'].mean()
-    df['outer_sens']=sen_score
-    total_sen=df['outer_sens'].mean()
-    df['outer_spec']=spec_score
-    total_spec=df['outer_spec'].mean()
-    return total_score, total_sen, total_spec
+
+        y_pre=clf.predict(Xtest)
+        #calculate sensitivity/specificity
+        tn, fp, fn, tp=confusion_matrix(ytest, y_pre).ravel()
+        specificity= tn/(tn+fp)
+        sensitivity= tp/(tp+fn)
+        TPV=tp/(tp+fp)
+        RPV=tn/(tn+fn)
+        #Get accuracy of model
+        ACCscores=clf.score(Xtest,ytest)
+        acc_score.append(ACCscores)
+        sen_score.append(sensitivity)
+        spec_score.append(specificity)
+        TPV_score.append(TPV)
+        RPV_score.append(RPV)
+    total_score=mean(acc_score)
+    total_sen=mean(sen_score)
+    total_spec=mean(spec_score)
+    total_TPV=mean(TPV_score)
+    total_RPV=mean(RPV_score)
+    return total_score, total_sen, total_spec,total_TPV,total_RPV
 def SS_folds(clf,taskFC, restFC, test_taskFC):
     """
     Cross validation to train and test using nested loops
@@ -387,27 +397,38 @@ def classifyAll():
     acc_scores_per_sub=[]
     sen_scores_per_sub=[]
     spec_scores_per_sub=[]
+    TPV_scores_per_sub=[]
+    RPV_scores_per_sub=[]
     acc_scores_cv=[]
     sen_scores_cv=[]
     spec_scores_cv=[]
+    TPV_scores_cv=[]
+    RPV_scores_cv=[]
     df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
 
     for index, row in df.iterrows():
 
-        diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
-        acc_scores_per_sub.append(diff_score)
-        acc_scores_cv.append(same_score)
+        CV_score, CV_sens_score, CV_spec_score, CV_TPV_total,CV_RPV_total, DS_score, DS_sens_score, DS_spec_score, DS_TPV_total,DS_RPV_total=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
+        acc_scores_cv.append(CV_score)
         sen_scores_cv.append(CV_sens_score)
         spec_scores_cv.append(CV_spec_score)
+        TPV_scores_cv.append(CV_TPV_total)
+        RPV_scores_cv.append(CV_RPV_total)
+        acc_scores_per_sub.append(DS_score)
         sen_scores_per_sub.append(DS_sens_score)
         spec_scores_per_sub.append(DS_spec_score)
-
+        TPV_scores_per_sub.append(DS_TPV_total)
+        RPV_scores_per_sub.append(DS_RPV_total)
     df['cv_acc']=acc_scores_cv
     df['cv_sen']=sen_scores_cv
     df['cv_spec']=spec_scores_cv
+    df['cv_tpv']=TPV_scores_cv
+    df['cv_rpv']=RPV_scores_cv
     df['acc']=acc_scores_per_sub
     df['ds_sen']=sen_scores_per_sub
     df['ds_spec']=spec_scores_per_sub
+    df['ds_tpv']=TPV_scores_per_sub
+    df['ds_rpv']=RPV_scores_per_sub
     #df.to_csv(outDir+'acc/ALL/shufflekFold_acc.csv',index=False)
     df.to_csv(outDir+'acc/ALL/LOO_acc.csv',index=False)
 
@@ -448,8 +469,8 @@ def modelAll(train_sub, test_sub):
     test_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
     test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
 
-    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_restFC)
-    return diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
+    CV_score, CV_sens_score, CV_spec_score, CV_TPV_total,CV_RPV_total, DS_score, DS_sens_score, DS_spec_score, DS_TPV_total,DS_RPV_total=K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_taskFC,test_restFC)
+    return CV_score, CV_sens_score, CV_spec_score, CV_TPV_total,CV_RPV_total, DS_score, DS_sens_score, DS_spec_score, DS_TPV_total,DS_RPV_total
 
 def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_restFC):
     """
@@ -483,7 +504,8 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     test_restSize=test_restFC.shape[0]
     testT= np.ones(test_taskSize, dtype = int)
     testR= np.zeros(test_restSize, dtype = int)
-
+    ytest=np.concatenate((testT,testR))
+    Xtest=np.concatenate((test_taskFC,test_restFC))
     taskScore=[]
     restScore=[]
     testTScore=[]
@@ -491,12 +513,15 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
     CVacc=[]
     CVspec=[]
     CVsen=[]
-    df=pd.DataFrame()
-    acc_score=[]
+    CV_TPV=[]
+    CV_RPV=[]
+    DSacc=[]
     DSspec=[]
     DSsen=[]
+    DS_TPV=[]
+    DS_RPV=[]
     #fold each training set
-    session=splitDict[train_sub[0]]
+    session=splitDict[train_sub]
     split=np.empty((session, 55278))
 
     for train_index, test_index in loo.split(split):
@@ -520,14 +545,14 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
         y_val=np.concatenate((yval_task, yval_rest))
         clf.fit(X_tr,y_tr)
-        ts=clf.score(Xval_task, yval_task)
-        rs=clf.score(Xval_rest, yval_rest)
-        taskScore.append(ts)
-        restScore.append(rs)
-        testTask=clf.score(test_taskFC, testT)
-        testRest=clf.score(test_restFC, testR)
-        testTScore.append(testTask)
-        testRScore.append(testRest)
+        #ts=clf.score(Xval_task, yval_task)
+        #rs=clf.score(Xval_rest, yval_rest)
+        #taskScore.append(ts)
+        #restScore.append(rs)
+        #testTask=clf.score(test_taskFC, testT)
+        #testRest=clf.score(test_restFC, testR)
+        #testTScore.append(testTask)
+        #testRScore.append(testRest)
         #cross validation
 
         y_pred=clf.predict(X_val)
@@ -535,63 +560,44 @@ def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC,restFC, test_taskFC, test_
         tn, fp, fn, tp=confusion_matrix(y_val, y_pred).ravel()
         CV_specificity= tn/(tn+fp)
         CV_sensitivity= tp/(tp+fn)
+        CV_TPV_score=tp/(tp+fp)
+        CV_RPV_score=tn/(tn+fn)
         #get accuracy
         CV_score=clf.score(X_val, y_val)
         CVacc.append(CV_score)
         CVspec.append(CV_specificity)
         CVsen.append(CV_sensitivity)
+        CV_TPV.append(CV_TPV_score)
+        CV_RPV.append(CV_RPV_score)
         #fold each testing set
 
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
-        sen_scores_per_fold=[]
-        spec_scores_per_fold=[]
+        #test set
+        y_pred_testset=clf.predict(Xtest)
+        #Test labels and predicted labels to calculate sensitivity specificity
+        DStn, DSfp, DSfn, DStp=confusion_matrix(ytest, y_pred_testset).ravel()
+        DS_specificity= DStn/(DStn+DSfp)
+        DS_sensitivity= DStp/(DStp+DSfn)
+        DS_TPV_score=DStp/(DStp+DSfp)
+        DS_RPV_score=DStn/(DStn+DSfn)
+        #Get accuracy of model
+        ACCscores=clf.score(Xtest,ytest)
+        DSacc.append(ACCscores)
+        DSsen.append(DS_sensitivity)
+        DSspec.append(DS_specificity)
+        DS_TPV.append(DS_TPV_score)
+        DS_RPV.append(DS_RPV_score)
+    CV_score=mean(CVacc)
+    CV_sens_score=mean(CVsen)
+    CV_spec_score=mean(CVspec)
+    CV_TPV_total=mean(CV_TPV)
+    CV_RPV_total=mean(CV_RPV)
+    DS_score=mean(DSacc)
+    DS_sens_score=mean(DSsen)
+    DS_spec_score=mean(DSspec)
+    DS_TPV_total=mean(DS_TPV)
+    DS_RPV_total=mean(DS_RPV)
 
-        for t_index, te_index in kf.split(test_taskFC):
-            Xtest_rest=test_restFC[te_index]
-            Xtest_task=test_taskFC[te_index]
-            X_te=np.concatenate((Xtest_task, Xtest_rest))
-            ytest_task=testT[te_index]
-            ytest_rest=testR[te_index]
-            y_te=np.concatenate((ytest_task, ytest_rest))
-            #test set
-            y_pred_testset=clf.predict(X_te)
-            #Test labels and predicted labels to calculate sensitivity specificity
-            DStn, DSfp, DSfn, DStp=confusion_matrix(y_te, y_pred_testset).ravel()
-            DS_specificity= DStn/(DStn+DSfp)
-            DS_sensitivity= DStp/(DStp+DSfn)
-            #Get accuracy of model
-            ACCscores=clf.score(X_te,y_te)
-            acc_scores_per_fold.append(ACCscores)
-            sen_scores_per_fold.append(DS_sensitivity)
-            spec_scores_per_fold.append(DS_specificity)
-
-        tmpdf['inner_fold']=acc_scores_per_fold
-        tmpdf['DS_sen']=sen_scores_per_fold
-        tmpdf['DS_spec']=spec_scores_per_fold
-        score=tmpdf['inner_fold'].mean()
-        sen=tmpdf['DS_sen'].mean()
-        spec=tmpdf['DS_spec'].mean()
-        acc_score.append(score)
-        DSspec.append(spec)
-        DSsen.append(sen)
-
-    df['cv']=CVacc
-    df['CV_sen']=CVsen
-    df['CV_spec']=CVspec
-    #Different sub outer acc
-    df['outer_fold']=acc_score
-    df['DS_sen']=DSsen
-    df['DS_spec']=DSspec
-    same_sub_score=df['cv'].mean()
-    diff_sub_score=df['outer_fold'].mean()
-    CV_sens_score=df['CV_sen'].mean()
-    CV_spec_score=df['CV_spec'].mean()
-    DS_sens_score=df['DS_sen'].mean()
-    DS_spec_score=df['DS_spec'].mean()
-
-
-    return diff_sub_score, same_sub_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
+    return  CV_score, CV_sens_score, CV_spec_score, CV_TPV_total,CV_RPV_total, DS_score, DS_sens_score, DS_spec_score, DS_TPV_total,DS_RPV_total
 
 
 def classifyAll_wPCA(num,pca_var_explained=.5):

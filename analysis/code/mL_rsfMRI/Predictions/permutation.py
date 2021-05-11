@@ -281,33 +281,15 @@ def CV_folds(clf,taskFC, restFC, test_taskFC, test_restFC):
     df['outer_fold']=acc_score
     total_score=df['outer_fold'].mean()
     return total_score
+def modelAll_perm():
+    master_df=pd.DataFrame()
+    for i in range(1000):
+        tmp=modelAll()
+        master_df=pd.concat([master_df,tmp])
+        print(str(i))
+    master_df.to_csv(outDir+'ALL/acc.csv',index=False)
 
-def classifyAll():
-    """
-    Classifying different subjects along available data rest split into 40 samples to match with task
-
-    Parameters
-    -------------
-
-    Returns
-    -------------
-    df : DataFrame
-        Dataframe consisting of average accuracy across all subjects
-
-    """
-    acc_scores_per_sub=[]
-    acc_scores_cv=[]
-    df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
-
-    for index, row in df.iterrows():
-        diff_score, same_score=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
-        acc_scores_per_sub.append(diff_score)
-        acc_scores_cv.append(same_score)
-    df['cv_acc']=acc_scores_cv
-    df['acc']=acc_scores_per_sub
-    return df
-
-def modelAll(train_sub, test_sub):
+def modelAll():
     """
     Preparing machine learning model with appropriate data
 
@@ -327,29 +309,32 @@ def modelAll(train_sub, test_sub):
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
     clf=RidgeClassifier()
-    df=pd.DataFrame()
     #train sub
-    memFC=reshape.matFiles(dataDir+'mem/'+train_sub+'_parcel_corrmat.mat')
-    semFC=reshape.matFiles(dataDir+'semantic/'+train_sub+'_parcel_corrmat.mat')
-    glassFC=reshape.matFiles(dataDir+'glass/'+train_sub+'_parcel_corrmat.mat')
-    motFC=reshape.matFiles(dataDir+'motor/'+train_sub+'_parcel_corrmat.mat')
-    restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
-    taskFC=np.concatenate((memFC,semFC,glassFC,motFC))
-    #to have more control over sessions
-    #taskFC=np.dstack((memFC,semFC,glassFC,motFC))#10x55278x4
-    #restFC=np.reshape(restFC,(10,4,55278)) #reshape to gather correct days
-    #test sub
-    test_memFC=reshape.matFiles(dataDir+'mem/'+test_sub+'_parcel_corrmat.mat')
-    test_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub+'_parcel_corrmat.mat')
-    test_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub+'_parcel_corrmat.mat')
-    test_motFC=reshape.matFiles(dataDir+'motor/'+test_sub+'_parcel_corrmat.mat')
-    test_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+test_sub+'_parcel_corrmat.mat')
-    test_taskFC=np.concatenate((test_memFC,test_semFC,test_glassFC,test_motFC))
-    #return taskFC,restFC, test_taskFC,test_restFC
-    diff_score, same_score=K_folds(train_sub, clf, taskFC, restFC, test_taskFC,test_restFC)
-    return diff_score, same_score
+    master_df=pd.DataFrame()
+    data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
+    loo = LeaveOneOut()
 
-def K_folds(train_sub, clf,taskFC,restFC, test_taskFC, test_restFC):
+    for  test, train in loo.split(data): #train on one sub test on the rest
+        tmp=pd.DataFrame()
+        train_sub=data[train]
+        test_sub=data[test]
+    #train sub
+        memFC=reshape.matFiles(dataDir+'mem/'+train_sub[0]+'_parcel_corrmat.mat')
+        semFC=reshape.matFiles(dataDir+'semantic/'+train_sub[0]+'_parcel_corrmat.mat')
+        glassFC=reshape.matFiles(dataDir+'glass/'+train_sub[0]+'_parcel_corrmat.mat')
+        motFC=reshape.matFiles(dataDir+'motor/'+train_sub[0]+'_parcel_corrmat.mat')
+        restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+train_sub[0]+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
+        nsize=restFC.shape[1]
+        restFC=np.reshape(restFC,(10,4,nsize)) #reshape to gather correct days
+        #test sub
+        testFC,ytest=Allbinary_SubFiles(test_sub)
+        same_Tsub, diff_Tsub=Kbinary_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest)
+        tmp['train']=train_sub
+        tmp['same_sub']=same_Tsub
+        tmp['diff_sub']=diff_Tsub
+        master_df=pd.concat([master_df,tmp])
+    return master_df
+def Kbinary_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
     Cross validation to train and test using nested loops
 
@@ -366,59 +351,51 @@ def K_folds(train_sub, clf,taskFC,restFC, test_taskFC, test_restFC):
     acc_score : list
         List of accuracy for each outer fold
     """
-
-    kf = KFold(n_splits=5,shuffle=True)
-    #reshape rest to get specific days
-
-    #having more control over sessions will require labeling within loop
-
-#    taskSize=taskFC.shape[0]
-#    restSize=restFC.shape[0]
-#    t = np.ones(taskSize, dtype = int)
-#    r=np.zeros(restSize, dtype=int)
-    taskSize=taskFC.shape[0]
-    restSize=restFC.shape[0]
-    t = np.ones(taskSize, dtype = int)
-    r=np.zeros(restSize, dtype=int)
-    Y=np.concatenate((t,r))
-    #Permute the data
-    Y_perm=np.random.permutation(Y)
-    #For the purpose of this script split them back into a pseudo rest and task array
-    t, r =np.array_split(Y_perm, 2)
-    test_taskSize=test_taskFC.shape[0]
-    test_restSize=test_restFC.shape[0]
-    test_t = np.ones(test_taskSize, dtype = int)
-    test_r=np.zeros(test_restSize, dtype=int)
-    Xtest=np.concatenate((test_taskFC,test_restFC))
-    ytest=np.concatenate((test_t,test_r))
-    CVacc=[]
-    df=pd.DataFrame()
-    acc_score=[]
-    #fold each training set
-    for train_index, test_index in kf.split(taskFC):
-        Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
-        Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
-        ytrain_rest, yval_rest=r[train_index], r[test_index]
-        ytrain_task, yval_task=t[train_index], t[test_index]
+    #for same subject take sum of each fold
+    #for different subject take average of each fold
+    number=memFC.shape[1]
+    loo = LeaveOneOut()
+    ymem=np.ones(memFC.shape[0])
+    ysem=np.full(semFC.shape[0],1)
+    yglass=np.full(glassFC.shape[0],1)
+    ymot=np.full(motFC.shape[0],1)
+    CVTacc=[]
+    DSTacc=[]
+    session=splitDict[train_sub[0]]
+    split=np.empty((session, 55278))
+    for train_index, test_index in loo.split(split):
+        memtrain, memval=memFC[train_index], memFC[test_index]
+        ymemtrain, ymemval=ymem[train_index], ymem[test_index]
+        semtrain, semval=semFC[train_index], semFC[test_index]
+        ysemtrain, ysemval=ysem[train_index],ysem[test_index]
+        mottrain, motval=motFC[train_index], motFC[test_index]
+        ymottrain, ymotval=ymot[train_index],ymot[test_index]
+        glatrain, glaval=glassFC[train_index], glassFC[test_index]
+        yglatrain,yglaval=yglass[train_index],yglass[test_index]
+        Xtrain_task=np.concatenate((memtrain,semtrain,mottrain,glatrain))
+        ytrain_task=np.concatenate((ymemtrain,ysemtrain,ymottrain,yglatrain))
+        yval_task=np.concatenate((ymemval,ysemval,ymotval,yglaval))
+        Xtrain_rest, Xval_rest=restFC[train_index,:,:], restFC[test_index,:,:]
+        Xval_task=np.concatenate((memval,semval,motval,glaval))
+        Xtrain_rest=np.reshape(Xtrain_rest,(-1,number))
+        Xval_rest=np.reshape(Xval_rest,(-1,number))
+        ytrain_rest=np.zeros(Xtrain_rest.shape[0], dtype=int)
+        yval_rest=np.zeros(Xval_rest.shape[0], dtype=int)
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
-        X_val=np.concatenate((Xval_task, Xval_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
-        y_val=np.concatenate((yval_task, yval_rest))
+        y_tr=np.random.permutation(y_tr)
+        X_val=np.concatenate((Xval_task, Xval_rest))
+        y_val = np.concatenate((yval_task,yval_rest))
         clf.fit(X_tr,y_tr)
-        #get accuracy
-        CV_score=clf.score(X_val, y_val)
-        CVacc.append(CV_score)
-        DS_score=clf.score(Xtest,ytest)
-        acc_score.append(DS_score)
-    df['cv']=CVacc
-    df['outer_fold']=acc_score
-    same_sub_score=df['cv'].mean()
-    diff_sub_score=df['outer_fold'].mean()
-    return diff_sub_score, same_sub_score
-
-
-
-
+        score=clf.score(X_val, y_val)
+        CVTacc.append(score)
+        scoreT=clf.score(testFC,ytest)
+        DSTacc.append(scoreT)
+    same_Tsub=mean(CVTacc)
+    #same_Rsub=mean(CVRacc)
+    diff_Tsub=mean(DSTacc)
+    #diff_Rsub=mean(DSRacc)
+    return same_Tsub, diff_Tsub
 
 def multiclass_perm():
     master_df=pd.DataFrame()
@@ -472,8 +449,8 @@ def multiclassAll():
         tmp['same']=same_Tsub
         tmp['diff']=diff_Tsub
         master_df=pd.concat([master_df,tmp])
-    return master_df
-    #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
+    #return master_df
+    master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
 
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
@@ -502,15 +479,11 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     yglass=np.full(glassFC.shape[0],3)
     ymot=np.full(motFC.shape[0],4)
     CVTacc=[]
-
-    df=pd.DataFrame()
     DSTacc=[]
 
     #fold each training set
     session=splitDict[train_sub[0]]
     split=np.empty((session, 55278))
-
-
     for train_index, test_index in loo.split(split):
         memtrain, memval=memFC[train_index], memFC[test_index]
         ymemtrain, ymemval=ymem[train_index], ymem[test_index]
@@ -524,6 +497,7 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
         yresttrain, yrestval=yrest[train_index],yrest[test_index]
         Xtrain=np.concatenate((resttrain,memtrain,semtrain,mottrain,glatrain))
         ytrain=np.concatenate((yresttrain,ymemtrain,ysemtrain,ymottrain,yglatrain))
+        #ytrain=np.random.permutation(ytrain)
         yval=np.concatenate((yrestval,ymemval,ysemval,ymotval,yglaval))
         Xval=np.concatenate((restval,memval,semval,motval,glaval))
         clf.fit(Xtrain,ytrain)
@@ -604,6 +578,86 @@ def AllSubFiles(test_sub):
 
     motFC=np.concatenate((a_motFC,b_motFC,c_motFC,d_motFC,e_motFC,f_motFC,g_motFC))
     ymot=np.full(motFC.shape[0],4)
+    #rest, mem, sem, mot, glass
+
+    testFC=np.concatenate((restFC,memFC,semFC,motFC, glassFC))
+    ytest=np.concatenate((testR,ymem,ysem,ymot,yglass))
+    #taskFC=np.concatenate((a_memFC,a_semFC,a_glassFC,a_motFC,b_memFC,b_semFC,b_glassFC,b_motFC,c_memFC,c_semFC,c_glassFC,c_motFC,d_memFC,d_semFC,d_glassFC,d_motFC,e_memFC,e_semFC,e_glassFC,e_motFC,f_memFC,f_semFC,f_glassFC,f_motFC,g_memFC,g_semFC,g_glassFC,g_motFC))
+
+    #testFC=np.concatenate((taskFC,restFC))
+    #ytest=np.concatenate((ytask,testR))
+    return testFC,ytest
+    #return taskFC, restFC,ytask, testR
+
+
+
+
+def Allbinary_SubFiles(test_sub):
+    """
+    Return task and rest FC all subs
+    Parameters
+    -----------
+    test_sub: Array of testing subs
+    Returns
+    ------------
+    taskFC, restFC : Array of task and rest FC of all testing subs
+    """
+    a_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[0]+'_parcel_corrmat.mat')
+    a_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[0]+'_parcel_corrmat.mat')
+
+    b_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[1]+'_parcel_corrmat.mat')
+    b_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[1]+'_parcel_corrmat.mat')
+
+    c_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[2]+'_parcel_corrmat.mat')
+    c_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[2]+'_parcel_corrmat.mat')
+
+    d_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[3]+'_parcel_corrmat.mat')
+    d_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[3]+'_parcel_corrmat.mat')
+
+    e_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[4]+'_parcel_corrmat.mat')
+    e_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[4]+'_parcel_corrmat.mat')
+
+    f_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[5]+'_parcel_corrmat.mat')
+    f_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[5]+'_parcel_corrmat.mat')
+
+    g_memFC=reshape.matFiles(dataDir+'mem/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_semFC=reshape.matFiles(dataDir+'semantic/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_glassFC=reshape.matFiles(dataDir+'glass/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_motFC=reshape.matFiles(dataDir+'motor/'+test_sub[6]+'_parcel_corrmat.mat')
+    g_restFC=reshape.matFiles(dataDir+'rest/'+test_sub[6]+'_parcel_corrmat.mat')
+
+    restFC=np.concatenate((a_restFC,b_restFC,c_restFC,d_restFC,e_restFC,f_restFC,g_restFC))
+    test_restSize=restFC.shape[0]
+    testR= np.zeros(test_restSize, dtype = int)
+    memFC=np.concatenate((a_memFC,b_memFC,c_memFC,d_memFC,e_memFC,f_memFC,g_memFC))
+    ymem=np.ones(memFC.shape[0])
+
+    semFC=np.concatenate((a_semFC,b_semFC,c_semFC,d_semFC,e_semFC,f_semFC,g_semFC))
+    ysem=np.full(semFC.shape[0],1)
+
+    glassFC=np.concatenate((a_glassFC,b_glassFC,c_glassFC,d_glassFC,e_glassFC,f_glassFC,g_glassFC))
+    yglass=np.full(glassFC.shape[0],1)
+
+    motFC=np.concatenate((a_motFC,b_motFC,c_motFC,d_motFC,e_motFC,f_motFC,g_motFC))
+    ymot=np.full(motFC.shape[0],1)
     #rest, mem, sem, mot, glass
 
     testFC=np.concatenate((restFC,memFC,semFC,motFC, glassFC))

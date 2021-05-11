@@ -25,6 +25,8 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from sklearn.metrics import plot_confusion_matrix
+import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
 #import other python scripts for further anlaysis
 # Initialization of directory information:
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
@@ -33,6 +35,8 @@ dataDir = thisDir + 'data/mvpa_data/'
 outDir = thisDir + 'output/results/acc/'
 # Subjects and tasks
 splitDict=dict([('MSC01',10),('MSC02',10),('MSC03',8),('MSC04',10),('MSC05',10),('MSC06',9),('MSC07',9),('MSC10',10)])
+
+taskDict=dict([('mem',0),('motor',1),('glass',2),('semantic',3)])
 
 taskList=['semantic','glass', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -68,13 +72,16 @@ def classifySS():
     dfSS['sub']=tmp_df['sub']
     for index, row in dfSS.iterrows():
         taskFC=reshape.matFiles(dataDir+row['train_task']+'/'+row['sub']+'_parcel_corrmat.mat')
-        tmp_restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/half/'+row['sub']+'_parcel_corrmat.mat')
-        restFC=tmp_restFC[:10]
-        test_restFC=tmp_restFC[10:]
+        restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+row['sub']+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
+        nsize=restFC.shape[1]
+        restFC=np.reshape(restFC,(10,4,nsize)) #reshape to gather correct days
+        trainRest=taskDict[row['train_task']]
+        testRest=taskDict[row['test_task']]
+        Xtrain_rest, Xval_rest=restFC[:,trainRest,:], restFC[:,testRest,:]
         testFC=reshape.matFiles(dataDir+row['test_task']+'/'+row['sub']+'_parcel_corrmat.mat')
         ytest=np.ones(testFC.shape[0])
         #same, diff=SS_folds(clf,taskFC,restFC,testFC,ytest)
-        same_Tsub, same_Rsub, diff_Tsub, diff_Rsub=folds(clf, taskFC,restFC, testFC,test_restFC)
+        same_Tsub, diff_Tsub, same_Rsub, diff_Rsub=SS_folds(row['sub'],clf, taskFC,Xtrain_rest, testFC, Xval_rest)
         same_task.append(same_Tsub)
         diff_task.append(diff_Tsub)
         same_rest.append(same_Rsub)
@@ -192,53 +199,7 @@ def BSmodel():
             master_df=pd.concat([master_df,tmp])
     master_df.to_csv(outDir+'BS/separate_acc.csv',index=False)
 
-def DSmodel():
-    """
-    Preparing machine learning model with appropriate data
 
-    Parameters
-    -------------
-    analysis : string
-            The type of analysis to be conducted
-    train_sub : str
-            Subject name for training
-    test_sub : str
-            Subject name for testing
-    train_task : str
-            Task name for training
-    test_task : str
-            Task name for testing
-
-    Returns
-    -------------
-    total_score : float
-            Average accuracy of all folds
-
-    """
-    #clf=LinearSVC()
-    #clf=LogisticRegression(solver = 'lbfgs')
-    clf=LinearSVC()
-    master_df=pd.DataFrame()
-    data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
-    loo = LeaveOneOut()
-    for t in taskList:
-        for  test, train in loo.split(data): #train on one sub test on the rest
-            tmp=pd.DataFrame()
-            train_sub=data[train]
-            test_sub=data[test]
-        #train sub
-            taskFC=reshape.matFiles(dataDir+t+'/'+train_sub[0]+'_parcel_corrmat.mat')
-            restFC=reshape.matFiles(dataDir+'rest/'+train_sub[0]+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
-            test_taskFC,test_restFC=AllSubFiles_DS(test_sub,t)
-            same_Tsub, same_Rsub, diff_Tsub, diff_Rsub=folds(clf, taskFC,restFC, test_taskFC,test_restFC)
-            tmp['train']=train_sub
-            tmp['task']=t
-            tmp['same_subT']=same_Tsub
-            tmp['same_subR']=same_Rsub
-            tmp['diff_subT']=diff_Tsub
-            tmp['diff_subR']=diff_Rsub
-            master_df=pd.concat([master_df,tmp])
-    master_df.to_csv(outDir+'DS/separate_acc.csv',index=False)
 def folds(clf,taskFC, restFC, test_taskFC, test_restFC):
     """
     Cross validation to train and test using nested loops
@@ -296,7 +257,7 @@ def folds(clf,taskFC, restFC, test_taskFC, test_restFC):
     return same_Tsub, same_Rsub, diff_Tsub, diff_Rsub
 
 
-def SS_folds(clf,taskFC, restFC, test_taskFC, ytest):
+def SS_folds(train_sub,clf,taskFC, restFC, test_taskFC, testRestFC):
     """
     Cross validation to train and test using nested loops
 
@@ -321,24 +282,42 @@ def SS_folds(clf,taskFC, restFC, test_taskFC, ytest):
     restSize=restFC.shape[0]
     t = np.ones(taskSize, dtype = int)
     r=np.zeros(restSize, dtype=int)
+    Test_taskSize=test_taskFC.shape[0]
+    Test_restSize=testRestFC.shape[0]
+    Tt = np.ones(Test_taskSize, dtype = int)
+    Tr=np.zeros(Test_restSize, dtype=int)
     CVTacc=[]
     DSTacc=[]
+    CVRacc=[]
+    DSRacc=[]
+    session=splitDict[train_sub]
+    split=np.empty((session, 55278))
     #fold each training set
-    for train_index, test_index in loo.split(taskFC):
+    for train_index, test_index in loo.split(split):
         Xtrain_rest,Xval_rest=restFC[train_index],restFC[test_index]
         Xtrain_task,Xval_task=taskFC[train_index],taskFC[test_index]
         ytrain_rest,yval_rest=r[train_index],r[test_index]
         ytrain_task,yval_task=t[train_index],t[test_index]
         X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
         y_tr = np.concatenate((ytrain_task,ytrain_rest))
+
+        Xtest_task, Xtest_rest=test_taskFC[test_index], testRestFC[test_index]
+        yTest_Task=Tt[test_index]
+        yTest_Rest=Tr[test_index]
         clf.fit(X_tr,y_tr)
         sameT=clf.score(Xval_task,yval_task)
-        diffT=clf.score(test_taskFC,ytest)
+        diffT=clf.score(Xtest_task,yTest_Task)
+        sameR=clf.score(Xval_rest,yval_rest)
+        diffR=clf.score(Xtest_rest,yTest_Rest)
         CVTacc.append(sameT)
         DSTacc.append(diffT)
+        CVRacc.append(sameR)
+        DSRacc.append(diffR)
     same_Tsub=mean(CVTacc)
     diff_Tsub=mean(DSTacc)
-    return same_Tsub, diff_Tsub
+    same_Rsub=mean(CVRacc)
+    diff_Rsub=mean(DSRacc)
+    return same_Tsub, diff_Tsub, same_Rsub, diff_Rsub
 
 def AllSubFiles_SS(train_sub,testT):
     """
@@ -555,6 +534,8 @@ def modelAll():
     #each cm for each sub
     CV_conf=np.empty((8,2,2))
     cm=0
+
+
     for  test, train in loo.split(data): #train on one sub test on the rest
         tmp=pd.DataFrame()
         train_sub=data[train]
@@ -570,12 +551,15 @@ def modelAll():
         #test sub
         testFC,ytest=AllSubFiles(test_sub)
         same_Tsub, diff_Tsub, CV_cm,DS_cm=K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest)
+
+        """
         plt.figure()
         ax=ConfusionMatrixDisplay(CV_cm,display_labels=['Rest','Task']).plot(cmap=plt.cm.Blues)
         plt.savefig(outDir+'ALL/same/'+train_sub[0]+'.png', bbox_inches='tight')
         plt.figure()
         ax=ConfusionMatrixDisplay(DS_cm,display_labels=['Rest','Task']).plot(cmap=plt.cm.Blues)
         plt.savefig(outDir+'ALL/diff/'+train_sub[0]+'.png', bbox_inches='tight')
+
         tmp['train']=train_sub
         tmp['same_sub']=same_Tsub
         tmp['diff_sub']=diff_Tsub
@@ -589,7 +573,7 @@ def modelAll():
     #master_df.to_csv(outDir+'ALL/separate_acc.csv',index=False)
     CV_conf.tofile('/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/acc/ALL/CV_confusionmatrix.csv', sep = ',')
     DS_conf.tofile('/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/acc/ALL/DS_confusionmatrix.csv', sep = ',')
-
+"""
 
 def K_folds(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
@@ -701,6 +685,13 @@ def multiclassAll():
 
     """
     #clf=LinearSVC()
+    all_CM_DS=np.zeros((5,5))
+    all_CM_CV=np.zeros((5,5))
+    fig=plt.figure(figsize=(25,20), constrained_layout=True)
+    plt.rcParams['figure.constrained_layout.use'] = True
+#Add grid space for subplots 1 rows by 3 columns
+    gs = gridspec.GridSpec(nrows=4, ncols=4)
+    b=0
     #clf=LogisticRegression(solver = 'lbfgs')
     clf=RidgeClassifier()
     #train sub
@@ -723,6 +714,62 @@ def multiclassAll():
         #test sub
         testFC,ytest=AllSubFiles(test_sub)
         same_Tsub, diff_Tsub,sameF,diffF,sameMCC, diffMCC, same_sub_CM, DS_cm=K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC, ytest)
+        """
+        if b<4:
+            a=0
+            ax=fig.add_subplot(gs[a,b])
+            ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax)
+
+            plt.xlabel(' ',fontsize=15)
+            plt.xticks(fontsize=10)
+            plt.yticks(fontsize=12)
+            plt.title(train_sub[0],fontsize=17)
+            if b==0:
+                plt.ylabel('True Label',fontsize=15)
+            else:
+                plt.ylabel(' ',fontsize=15)
+            b=b+1
+        else:
+            a=1
+            c=b-4
+            ax=fig.add_subplot(gs[a,c])
+            ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax)
+            plt.ylabel('True Label',fontsize=15)
+            plt.xlabel('Predicted Label',fontsize=15)
+            plt.xticks(fontsize=10)
+            plt.yticks(fontsize=12)
+            plt.title(train_sub[0],fontsize=17)
+            if c==0:
+                plt.ylabel('True Label',fontsize=15)
+            else:
+                plt.ylabel(' ',fontsize=15)
+            b=b+1
+        """
+        all_CM_DS=DS_cm+all_CM_DS
+        all_CM_CV=same_sub_CM+all_CM_CV
+    #plt.savefig(outDir+'ALL/MC/same/allSubs.png', bbox_inches='tight')
+    finalDS=all_CM_DS / all_CM_DS.astype(np.float).sum(axis=1)
+    finalCV=all_CM_CV / all_CM_CV.astype(np.float).sum(axis=1)
+    fig=plt.figure(figsize=(15,10), constrained_layout=True)
+    plt.rcParams['figure.constrained_layout.use'] = True
+#Add grid space for subplots 1 rows by 3 columns
+    gs = gridspec.GridSpec(nrows=1, ncols=2)
+    ax0=fig.add_subplot(gs[0,0])
+    ax=ConfusionMatrixDisplay(finalCV,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,ax=ax0,colorbar=False)
+    plt.ylabel('True Label',fontsize=25)
+    plt.xlabel('Predicted Label',fontsize=25)
+    plt.title('Average Multiclass Within Person',fontsize=25)
+    plt.xticks(fontsize=17)
+    plt.yticks(fontsize=20)
+    ax1=fig.add_subplot(gs[0,1])
+    ax=ConfusionMatrixDisplay(finalDS,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,ax=ax1,colorbar=False)
+    plt.ylabel(' ',fontsize=25)
+    plt.xlabel('Predicted Label',fontsize=25)
+    plt.title('Average Multiclass Across Person',fontsize=25)
+    plt.yticks([],[])
+    plt.xticks(fontsize=17)
+    plt.savefig(outDir+'ALL/MC/diff/average.png', bbox_inches='tight')
+    """
         plt.figure()
         ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues)
         plt.savefig(outDir+'ALL/MC/same/'+train_sub[0]+'.png', bbox_inches='tight')
@@ -737,9 +784,9 @@ def multiclassAll():
         tmp[['rest_CV', 'mem_CV', 'sem_CV', 'mot_CV', 'glass_CV']]=sameF.reshape(-1,len(sameF))
         tmp[['rest_DS', 'mem_DS', 'sem_DS', 'mot_DS', 'glass_DS']]=diffF.reshape(-1,len(diffF))
         master_df=pd.concat([master_df,tmp])
-    #return same_sub_CM, DS_cm
+    return same_sub_CM, DS_cm
     #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
-
+"""
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
     Cross validation to train and test using nested loops

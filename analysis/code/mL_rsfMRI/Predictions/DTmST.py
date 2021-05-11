@@ -26,6 +26,8 @@ dataDir = thisDir + 'data/mvpa_data/'
 outDir = thisDir + 'output/results/permutation/'
 splitDict=dict([('MSC01',10),('MSC02',10),('MSC03',8),('MSC04',10),('MSC05',10),('MSC06',9),('MSC07',9),('MSC10',10)])
 
+taskDict=dict([('mem',0),('motor',1),('glass',2),('semantic',3)])
+
 # Subjects and tasks
 taskList=['glass','semantic', 'motor','mem']
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
@@ -213,7 +215,7 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
     yTest= np.ones(test_taskFC.shape[0], dtype = int)
     r_tmp=np.zeros(restSize, dtype=int)
     #Concatenate rest and task labels
-    Y=np.concatenate((t_tmp,r_tmp))
+    #Y=np.concatenate((t_tmp,r_tmp))
     #Permute the data
     Y_perm=np.random.permutation(Y)
     #For the purpose of this script split them back into a pseudo rest and task array
@@ -342,7 +344,7 @@ def multiclass_perm():
         tmp=multiclassAll()
         master_df=pd.concat([master_df,tmp])
         print(str(i))
-    master_df.to_csv(outDir+'ALL/multiclass_perm.csv',index=False)
+    master_df.to_csv(outDir+'ALL/multiclass_Diffperm.csv',index=False)
 
 def multiclassAll():
     """
@@ -388,7 +390,7 @@ def multiclassAll():
         tmp['diff']=diff
         master_df=pd.concat([master_df,tmp])
     return master_df
-    #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
+    #master_df.to_csv(outDir+'ALL/TrueDiff_multiclass_acc.csv',index=False)
 
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
@@ -441,6 +443,7 @@ def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
         ytrain=np.concatenate((yresttrain,ymemtrain,ysemtrain,ymottrain,yglatrain))
         yval=np.concatenate((yrestval,ymemval,ysemval,ymotval,yglaval))
         Xval=np.concatenate((restval,memval,semval,motval,glaval))
+        ytrain=np.random.permutation(ytrain) #permute training labels
         clf.fit(Xtrain,ytrain)
         score=clf.score(Xval, yval)
         CVTacc.append(score)
@@ -530,3 +533,119 @@ def AllSubFiles(test_sub):
     #ytest=np.concatenate((ytask,testR))
     return testFC,ytest
     #return taskFC, restFC,ytask, testR
+
+
+def SS_sep_perm():
+    master_df=pd.DataFrame()
+    for i in range(1000):
+        tmp=classifySS_sep()
+        master_df=pd.concat([master_df,tmp])
+        print(str(i))
+    #master_df.to_csv(outDir+'SS/sepTask_perm.csv',index=False) #perm is the differencescore
+    master_df.to_csv(outDir+'SS/acc.csv',index=False) #acc is the null
+
+
+def classifySS_sep():
+    """
+    Classifying the same subject (SS) along a different task
+
+    Parameters
+    -------------
+
+
+    Returns
+    -------------
+    dfSS : DataFrame
+        Dataframe consisting of average accuracy across all subjects
+
+    """
+    clf=RidgeClassifier()
+    STmDT=[]
+
+    tmp_df=pd.DataFrame(SSvars, columns=['sub','task'])
+    dfSS=pd.DataFrame()
+    dfSS[['train_task','test_task']]=pd.DataFrame(tmp_df['task'].tolist())
+    dfSS['sub']=tmp_df['sub']
+    for index, row in dfSS.iterrows():
+        taskFC=reshape.matFiles(dataDir+row['train_task']+'/'+row['sub']+'_parcel_corrmat.mat')
+        restFC=reshape.matFiles(dataDir+'rest/corrmats_timesplit/fourths/'+row['sub']+'_parcel_corrmat.mat') #keep tasks seperated in order to collect the right amount of days
+        nsize=restFC.shape[1]
+        restFC=np.reshape(restFC,(10,4,nsize)) #reshape to gather correct days
+        trainRest=taskDict[row['train_task']]
+        testRest=taskDict[row['test_task']]
+        Xtrain_rest, Xval_rest=restFC[:,trainRest,:], restFC[:,testRest,:]
+        testFC=reshape.matFiles(dataDir+row['test_task']+'/'+row['sub']+'_parcel_corrmat.mat')
+        ytest=np.ones(testFC.shape[0])
+        #same, diff=SS_folds(clf,taskFC,restFC,testFC,ytest)
+        diff=SS_folds(row['sub'],clf, taskFC,Xtrain_rest, testFC, Xval_rest)
+        STmDT.append(diff)
+    dfSS['diff']=STmDT
+    dfSS.to_csv(outDir+'SS/sepTask_Trueacc.csv',index=False) #true difference score
+    #return dfSS
+
+def SS_folds(train_sub,clf,taskFC, restFC, test_taskFC, testRestFC):
+    """
+    Cross validation to train and test using nested loops
+
+    Parameters
+    -----------
+    clf : obj
+        Machine learning algorithm
+    analysis : str
+        Analysis type
+    taskFC, restFC, test_taskFC, test_restFC : array_like
+        Input arrays, training and testing set of task and rest FC
+    Returns
+    -----------
+    total_score : float
+        Average accuracy across folds
+    acc_score : list
+        List of accuracy for each outer fold
+    """
+
+    loo = LeaveOneOut()
+    taskSize=taskFC.shape[0]
+    restSize=restFC.shape[0]
+    t = np.ones(taskSize, dtype = int)
+    r=np.zeros(restSize, dtype=int)
+    Y=np.concatenate((t,r))
+    #Y_perm=np.random.permutation(Y)
+    #For the purpose of this script split them back into a pseudo rest and task array
+    #t, r =np.array_split(Y_perm, 2)
+    Test_taskSize=test_taskFC.shape[0]
+    Test_restSize=testRestFC.shape[0]
+    Tt = np.ones(Test_taskSize, dtype = int)
+    Tr=np.zeros(Test_restSize, dtype=int)
+    CVTacc=[]
+    DSTacc=[]
+    #CVRacc=[]
+    #DSRacc=[]
+    session=splitDict[train_sub]
+    split=np.empty((session, 55278))
+    #fold each training set
+    for train_index, test_index in loo.split(split):
+        Xtrain_rest,Xval_rest=restFC[train_index],restFC[test_index]
+        Xtrain_task,Xval_task=taskFC[train_index],taskFC[test_index]
+        ytrain_rest=r[train_index]
+        ytrain_task=t[train_index]
+        yval_task=np.array([1])
+        X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
+        y_tr = np.concatenate((ytrain_task,ytrain_rest))
+        Xtest_task, Xtest_rest=test_taskFC[test_index], testRestFC[test_index]
+        yTest_Task=Tt[test_index]
+        yTest_Rest=Tr[test_index]
+        clf.fit(X_tr,y_tr)
+        sameT=clf.score(Xval_task,yval_task)
+        diffT=clf.score(Xtest_task,yTest_Task)
+        #sameR=clf.score(Xval_rest,yval_rest)
+        #diffR=clf.score(Xtest_rest,yTest_Rest)
+        CVTacc.append(sameT)
+        DSTacc.append(diffT)
+        #CVRacc.append(sameR)
+        #DSRacc.append(diffR)
+    same_Tsub=mean(CVTacc)
+    diff_Tsub=mean(DSTacc)
+    diff=same_Tsub-diff_Tsub
+    #same_Rsub=mean(CVRacc)
+    #diff_Rsub=mean(DSRacc)
+    return diff
