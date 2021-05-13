@@ -27,6 +27,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import plot_confusion_matrix
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
 #import other python scripts for further anlaysis
 # Initialization of directory information:
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
@@ -34,6 +36,8 @@ thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
 outDir = thisDir + 'output/results/acc/'
 # Subjects and tasks
+#combining figures
+
 splitDict=dict([('MSC01',10),('MSC02',10),('MSC03',8),('MSC04',10),('MSC05',10),('MSC06',9),('MSC07',9),('MSC10',10)])
 
 taskDict=dict([('mem',0),('motor',1),('glass',2),('semantic',3)])
@@ -750,18 +754,22 @@ def multiclassAll():
     #plt.savefig(outDir+'ALL/MC/same/allSubs.png', bbox_inches='tight')
     finalDS=all_CM_DS / all_CM_DS.astype(np.float).sum(axis=1)
     finalCV=all_CM_CV / all_CM_CV.astype(np.float).sum(axis=1)
+    return finalDS, finalCV
+    #finalDS.tofile(outDir+'ALL/finalDS.csv',sep=',')
+    #finalCV.tofile(outDir+'ALL/finalCV.csv',sep=',')
+    """
     fig=plt.figure(figsize=(15,10), constrained_layout=True)
     plt.rcParams['figure.constrained_layout.use'] = True
 #Add grid space for subplots 1 rows by 3 columns
-    gs = gridspec.GridSpec(nrows=1, ncols=2)
-    ax0=fig.add_subplot(gs[0,0])
+    gs = gridspec.GridSpec(nrows=2, ncols=2)
+    ax0=fig.add_subplot(gs[1,0])
     ax=ConfusionMatrixDisplay(finalCV,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,ax=ax0,colorbar=False)
     plt.ylabel('True Label',fontsize=25)
     plt.xlabel('Predicted Label',fontsize=25)
     plt.title('Average Multiclass Within Person',fontsize=25)
     plt.xticks(fontsize=17)
     plt.yticks(fontsize=20)
-    ax1=fig.add_subplot(gs[0,1])
+    ax1=fig.add_subplot(gs[1,1])
     ax=ConfusionMatrixDisplay(finalDS,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,ax=ax1,colorbar=False)
     plt.ylabel(' ',fontsize=25)
     plt.xlabel('Predicted Label',fontsize=25)
@@ -769,7 +777,7 @@ def multiclassAll():
     plt.yticks([],[])
     plt.xticks(fontsize=17)
     plt.savefig(outDir+'ALL/MC/diff/average.png', bbox_inches='tight')
-    """
+
         plt.figure()
         ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues)
         plt.savefig(outDir+'ALL/MC/same/'+train_sub[0]+'.png', bbox_inches='tight')
@@ -786,7 +794,7 @@ def multiclassAll():
         master_df=pd.concat([master_df,tmp])
     return same_sub_CM, DS_cm
     #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
-"""
+    """
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
     Cross validation to train and test using nested loops
