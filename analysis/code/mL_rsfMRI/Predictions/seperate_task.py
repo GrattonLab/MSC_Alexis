@@ -28,13 +28,15 @@ from sklearn.metrics import plot_confusion_matrix
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 
 #import other python scripts for further anlaysis
 # Initialization of directory information:
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/results/acc/'
+outDir = thisDir + 'output/results/Log/acc/'
 # Subjects and tasks
 #combining figures
 
@@ -696,15 +698,17 @@ def multiclassAll():
 #Add grid space for subplots 1 rows by 3 columns
     gs = gridspec.GridSpec(nrows=4, ncols=4)
     b=0
-    #clf=LogisticRegression(solver = 'lbfgs')
-    clf=RidgeClassifier()
+    clf=LogisticRegression(solver = 'lbfgs')
+    #clf=LinearSVC()
+    #clf=RidgeClassifier()
     #train sub
     master_df=pd.DataFrame()
     d=pd.DataFrame()
     data=np.array(['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10'],dtype='<U61')
     loo = LeaveOneOut()
     for  test, train in loo.split(data): #train on one sub test on the rest
-        tmp=pd.DataFrame()
+        CV_tmp=pd.DataFrame()
+        DS_tmp=pd.DataFrame()
         train_sub=data[train]
         test_sub=data[test]
     #train sub
@@ -748,7 +752,7 @@ def multiclassAll():
             else:
                 plt.ylabel(' ',fontsize=15)
             b=b+1
-        """
+
         all_CM_DS=DS_cm+all_CM_DS
         all_CM_CV=same_sub_CM+all_CM_CV
     #plt.savefig(outDir+'ALL/MC/same/allSubs.png', bbox_inches='tight')
@@ -757,7 +761,7 @@ def multiclassAll():
     return finalDS, finalCV
     #finalDS.tofile(outDir+'ALL/finalDS.csv',sep=',')
     #finalCV.tofile(outDir+'ALL/finalCV.csv',sep=',')
-    """
+
     fig=plt.figure(figsize=(15,10), constrained_layout=True)
     plt.rcParams['figure.constrained_layout.use'] = True
 #Add grid space for subplots 1 rows by 3 columns
@@ -784,17 +788,28 @@ def multiclassAll():
         plt.figure()
         ax=ConfusionMatrixDisplay(DS_cm,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues)
         plt.savefig(outDir+'ALL/MC/diff/'+train_sub[0]+'.png', bbox_inches='tight')
-        tmp['train']=train_sub
-        tmp['same_sub']=same_Tsub
-        tmp['diff_sub']=diff_Tsub
-        tmp['MCC_CV']=sameMCC
-        tmp['MCC_DS']=diffMCC
-        tmp[['rest_CV', 'mem_CV', 'sem_CV', 'mot_CV', 'glass_CV']]=sameF.reshape(-1,len(sameF))
-        tmp[['rest_DS', 'mem_DS', 'sem_DS', 'mot_DS', 'glass_DS']]=diffF.reshape(-1,len(diffF))
-        master_df=pd.concat([master_df,tmp])
-    return same_sub_CM, DS_cm
-    #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
     """
+        CV_tmp['Task']=['rest','mem','sem','mot','glass']
+        CV_tmp['f1']=sameF
+        CV_tmp['train']=train_sub[0]
+        CV_tmp['acc']=same_Tsub
+        #CV_tmp[['rest_CV', 'mem_CV', 'sem_CV', 'mot_CV', 'glass_CV']]=sameF.reshape(-1,len(sameF))
+        CV_tmp['MCC']=sameMCC
+
+        CV_tmp['Analysis']='Same Person'
+
+        DS_tmp['Task']=['rest','mem','sem','mot','glass']
+        DS_tmp['f1']=diffF
+        DS_tmp['train']=train_sub[0]
+        DS_tmp['acc']=diff_Tsub
+        DS_tmp['MCC']=diffMCC
+        DS_tmp['Analysis']='Different Person'
+
+        #tmp[['rest_DS', 'mem_DS', 'sem_DS', 'mot_DS', 'glass_DS']]=diffF.reshape(-1,len(diffF))
+        master_df=pd.concat([master_df,CV_tmp,DS_tmp])
+    #return same_sub_CM, DS_cm
+    master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
+
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
     Cross validation to train and test using nested loops
