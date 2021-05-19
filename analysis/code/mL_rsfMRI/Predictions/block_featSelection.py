@@ -17,6 +17,7 @@ import numpy as np
 import os
 import sys
 import pandas as pd
+from statistics import mean
 from sklearn.model_selection import cross_val_score
 from sklearn import metrics
 import itertools
@@ -156,8 +157,8 @@ def K_folds(netSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_task
     acc_score : list
         List of accuracy for each outer fold
     """
-
-    kf = KFold(n_splits=5,shuffle=True)
+    loo = LeaveOneOut()
+    #kf = KFold(n_splits=5,shuffle=True)
     """
     taskSize=taskFC.shape[0]
     restSize=restFC.shape[0]
@@ -168,9 +169,11 @@ def K_folds(netSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_task
     test_restSize=test_restFC.shape[0]
     testT= np.ones(test_taskSize, dtype = int)
     testR= np.zeros(test_restSize, dtype = int)
+    ytest=np.concatenate((testT,testR))
+    Xtest=np.concatenate((test_taskFC,test_restFC))
     CVacc=[]
     df=pd.DataFrame()
-    acc_score=[]
+    DSacc=[]
     #fold each training set
     if train_sub=='MSC03':
         split=np.empty((8,netSize))
@@ -180,7 +183,7 @@ def K_folds(netSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_task
         split=np.empty((9,netSize))
     else:
         split=np.empty((10,netSize))
-    for train_index, test_index in kf.split(split):
+    for train_index, test_index in loo.split(split):
         memtrain, memval=memFC[train_index], memFC[test_index]
         semtrain, semval=semFC[train_index], semFC[test_index]
         mottrain, motval=motFC[train_index], motFC[test_index]
@@ -208,31 +211,14 @@ def K_folds(netSize,train_sub, clf, memFC,semFC,glassFC,motFC, restFC, test_task
         #get accuracy
         CV_score=clf.score(X_val, y_val)
         CVacc.append(CV_score)
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
+        #tmpdf=pd.DataFrame()
+        #acc_scores_per_fold=[]
         #fold each testing set
-        for t_index, te_index in kf.split(test_taskFC):
-            Xtest_rest=test_restFC[te_index]
-            Xtest_task=test_taskFC[te_index]
-            X_te=np.concatenate((Xtest_task, Xtest_rest))
-            ytest_task=testT[te_index]
-            ytest_rest=testR[te_index]
-            y_te=np.concatenate((ytest_task, ytest_rest))
-            scaler.transform(X_te)
-            #test set
-            y_pred_testset=clf.predict(X_te)
-            #Test labels and predicted labels to calculate sensitivity specificity
-            #Get accuracy of model
-            ACCscores=clf.score(X_te,y_te)
-            acc_scores_per_fold.append(ACCscores)
-        tmpdf['inner_fold']=acc_scores_per_fold
-        score=tmpdf['inner_fold'].mean()
-        acc_score.append(score)
-    df['cv']=CVacc
-    #Different sub outer acc
-    df['outer_fold']=acc_score
-    same_sub_score=df['cv'].mean()
-    diff_sub_score=df['outer_fold'].mean()
+        scaler.transform(Xtest)
+        DS_score=clf.score(Xtest,ytest)
+        DSacc.append(DS_score)
+    diff_sub_score=mean(DSacc)
+    same_sub_score=mean(CVacc)
     return diff_sub_score, same_sub_score
 
 def classifyDS(network,subnetwork=None):
@@ -344,3 +330,36 @@ def CV_folds(clf, analysis, taskFC, restFC, test_taskFC, test_restFC):
     total_score=df['outer_fold'].mean()
 
     return total_score
+
+
+def CVNet2Net():
+    netDF=pd.DataFrame(netComb, columns=['Network_A','Network_B'])
+    finalDF=pd.DataFrame()
+    for index, row in netDF.iterrows():
+        tmp_df=classifyCV_Net2Net(network=row['Network_A'], subnetwork=row['Network_B'])
+        tmp_df['Network_A']=row['Network_A']
+        tmp_df['Network_B']=row['Network_B']
+        finalDF=pd.concat([finalDF, tmp_df])
+    for i in networks:
+        tmp_df=classifyCV_Net2Net(network=i,subnetwork=i)
+        tmp_df['Network_A']=i
+        tmp_df['Network_B']=i
+        finalDF=pd.concat([finalDF, tmp_df])
+    finalDF.to_csv(thisDir+'output/results/acc/CV/subNetwork_acc.csv')
+
+def classifyCV_Net2Net(network,subnetwork=None):
+    dfCV=pd.DataFrame(CVvars, columns=['sub','task'])
+    clf=RidgeClassifier()
+    acc_scores_per_task=[]
+    for index, row in dfCV.iterrows():
+        taskFC=reshape.network_to_network(dataDir+row['task']+'/'+row['sub']+'_parcel_corrmat.mat',network,subnetwork)
+        restFC=reshape.network_to_network(dataDir+'rest/'+row['sub']+'_parcel_corrmat.mat',network,subnetwork)
+        folds=taskFC.shape[0]
+        x_train, y_train=reshape.concateFC(taskFC, restFC)
+        CVscores=cross_val_score(clf, x_train, y_train, cv=folds)
+        mu=CVscores.mean()
+        acc_scores_per_task.append(mu)
+    #average acc per sub per tasks
+    dfCV['acc']=acc_scores_per_task
+    return dfCV
+    #dfCV.to_csv(outDir+network+'_'+subnetwork+'/CV/acc.csv')
