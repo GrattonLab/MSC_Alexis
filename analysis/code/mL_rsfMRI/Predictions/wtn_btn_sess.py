@@ -4,16 +4,13 @@
 
 # In[ ]:
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import KFold
 from sklearn.linear_model import RidgeClassifier
 import numpy as np
 import os
 import sys
 import pandas as pd
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_predict
+from statistics import mean
 import itertools
 #import other python scripts for further anlaysis
 import reshape
@@ -49,20 +46,21 @@ def groupApp():
     within_acc_scores_per_task=[]
     within_sen_per_task=[]
     within_spec_per_task=[]
-    btn_acc_scores_per_task=[]
-    btn_sen_per_task=[]
-    btn_spec_per_task=[]
-    dfGroup=pd.DataFrame(tasksComb, columns=['train_task','test_task'])
-    for index, row in dfGroup.iterrows():
-        within_score, btn_score=model(train_task=row['train_task'], test_task=row['test_task'])
+    #btn_acc_scores_per_task=[]
+    #btn_sen_per_task=[]
+    #btn_spec_per_task=[]
+    #dfGroup=pd.DataFrame(tasksComb, columns=['train_task','test_task'])
+    dfGroup=pd.DataFrame(taskList, columns=['task'])
+    for task in taskList:
+        within_score=model(task)
         within_acc_scores_per_task.append(within_score)
-        btn_acc_scores_per_task.append(btn_score)
-    dfGroup['train_acc']=within_acc_scores_per_task
-    dfGroup['test_acc']=btn_acc_scores_per_task
+        #btn_acc_scores_per_task.append(btn_score)
+    dfGroup['acc']=within_acc_scores_per_task
+    #dfGroup['test_acc']=btn_acc_scores_per_task
     #save accuracy
-    dfGroup.to_csv(outDir+'acc.csv',index=False)
+    dfGroup.to_csv(outDir+'updated_acc.csv',index=False)
 
-def model(train_task, test_task):
+def model(train_task):
     """
     Preparing machine learning model with appropriate data
 
@@ -92,7 +90,7 @@ def model(train_task, test_task):
 
     clf=RidgeClassifier()
     loo = LeaveOneOut()
-    df=pd.DataFrame()
+    #df=pd.DataFrame()
     #nsess x fc x nsub
     ds_T=np.empty((8,55278,8))
     ds_R=np.empty((8,55278,8))
@@ -109,13 +107,13 @@ def model(train_task, test_task):
         ds_T[:,:,count]=tmp_taskFC
         ds_R[:,:,count]=tmp_restFC
         #testing task
-        test_taskFC=reshape.matFiles(dataDir+test_task+'/'+sub+'_parcel_corrmat.mat')
-        test_taskFC=test_taskFC[:8,:]
-        ds_Test[:,:,count]=test_taskFC
+        #test_taskFC=reshape.matFiles(dataDir+test_task+'/'+sub+'_parcel_corrmat.mat')
+        #test_taskFC=test_taskFC[:8,:]
+        #ds_Test[:,:,count]=test_taskFC
         count=count+1
     sess_wtn_score=[]
-    sess_btn_score=[]
-    sessionTotal=pd.DataFrame()
+    #sess_btn_score=[]
+    #sessionTotal=pd.DataFrame()
     #train leave one sub out
     #test on left out sub
     #test on new task of left out sub
@@ -131,34 +129,32 @@ def model(train_task, test_task):
         restSize=restFC.shape[0]
         t = np.ones(taskSize, dtype = int)
         r=np.zeros(restSize, dtype=int)
-        df=pd.DataFrame()
+        #df=pd.DataFrame()
         wtn_scoreList=[]
-        btn_scoreList=[]
+        #btn_scoreList=[]
     #fold each training set (sub)
         for train_index, test_index in loo.split(taskFC):
             Xtrain_rest, Xtest_rest=restFC[train_index], restFC[test_index]
             Xtrain_task, Xtest_task=taskFC[train_index], taskFC[test_index]
             #Xval is the new task 10 sessions
             #just the left out sub data
-            testFC=ds_Test[:,:,test_index[0]]
-            ytrain_rest=r[train_index]
-            ytrain_task=t[train_index]
+            #testFC=ds_Test[:,:,test_index[0]]
+            ytrain_rest,ytest_rest=r[train_index], r[test_index]
+            ytrain_task,ytest_task=t[train_index], t[test_index]
             X_tr=np.concatenate((Xtrain_task, Xtrain_rest))
             y_tr = np.concatenate((ytrain_task,ytrain_rest))
             clf.fit(X_tr,y_tr)
-            y_test=np.array([1, 0])
             X_test=np.concatenate((Xtest_task, Xtest_rest))
-            y_pre=clf.predict(X_test)
-            ACCscores=clf.score(X_test,y_test)
+            ytest=np.concatenate((ytest_task, ytest_rest))
+            ACCscores=clf.score(X_test,ytest)
             wtn_scoreList.append(ACCscores)
-            testSize=testFC.shape[0]
-            y_val= np.ones(testSize, dtype = int)
+            #testSize=testFC.shape[0]
+            #y_val= np.ones(testSize, dtype = int)
             #test unseen sub new task all 10 sessions
-            y_pre_val=clf.predict(testFC)
-            btn_ACCscores=clf.score(testFC, y_val)
-            btn_scoreList.append(btn_ACCscores)
-    df['wtn_fold']=wtn_scoreList
-    wtn_score=df['wtn_fold'].mean()
-    df['btn_fold']=btn_scoreList
-    btn_score=df['btn_fold'].mean()
-    return wtn_score, btn_score
+            #y_pre_val=clf.predict(testFC)
+            #btn_ACCscores=clf.score(testFC, y_val)
+            #btn_scoreList.append(btn_ACCscores)
+    wtn_score=mean(wtn_scoreList)
+    #df['btn_fold']=btn_scoreList
+    #btn_score=df['btn_fold'].mean()
+    return wtn_score#, btn_score
