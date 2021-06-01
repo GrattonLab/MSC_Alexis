@@ -698,9 +698,9 @@ def multiclassAll():
 #Add grid space for subplots 1 rows by 3 columns
     gs = gridspec.GridSpec(nrows=4, ncols=4)
     b=0
-    clf=LogisticRegression(solver = 'lbfgs')
+    #clf=LogisticRegression(solver = 'lbfgs')
     #clf=LinearSVC()
-    #clf=RidgeClassifier()
+    clf=RidgeClassifier()
     #train sub
     master_df=pd.DataFrame()
     d=pd.DataFrame()
@@ -722,12 +722,11 @@ def multiclassAll():
         #test sub
         testFC,ytest=AllSubFiles(test_sub)
         same_Tsub, diff_Tsub,sameF,diffF,sameMCC, diffMCC, same_sub_CM, DS_cm=K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC, ytest)
-        """
+
         if b<4:
             a=0
             ax=fig.add_subplot(gs[a,b])
             ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax)
-
             plt.xlabel(' ',fontsize=15)
             plt.xticks(fontsize=10)
             plt.yticks(fontsize=12)
@@ -761,7 +760,7 @@ def multiclassAll():
     return finalDS, finalCV
     #finalDS.tofile(outDir+'ALL/finalDS.csv',sep=',')
     #finalCV.tofile(outDir+'ALL/finalCV.csv',sep=',')
-
+    """
     fig=plt.figure(figsize=(15,10), constrained_layout=True)
     plt.rcParams['figure.constrained_layout.use'] = True
 #Add grid space for subplots 1 rows by 3 columns
@@ -788,7 +787,7 @@ def multiclassAll():
         plt.figure()
         ax=ConfusionMatrixDisplay(DS_cm,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues)
         plt.savefig(outDir+'ALL/MC/diff/'+train_sub[0]+'.png', bbox_inches='tight')
-    """
+
         CV_tmp['Task']=['rest','mem','sem','mot','glass']
         CV_tmp['f1']=sameF
         CV_tmp['train']=train_sub[0]
@@ -807,8 +806,8 @@ def multiclassAll():
 
         #tmp[['rest_DS', 'mem_DS', 'sem_DS', 'mot_DS', 'glass_DS']]=diffF.reshape(-1,len(diffF))
         master_df=pd.concat([master_df,CV_tmp,DS_tmp])
-    #return same_sub_CM, DS_cm
-    master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
+        """
+    #master_df.to_csv(outDir+'ALL/multiclass_acc.csv',index=False)
 
 def K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC,ytest):
     """
