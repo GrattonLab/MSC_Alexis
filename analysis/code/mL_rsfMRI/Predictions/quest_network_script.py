@@ -1,17 +1,18 @@
 
 from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import KFold
+from sklearn.model_selection import LeaveOneOut
 from sklearn.linear_model import RidgeClassifier
 import numpy as np
 import pandas as pd
 import itertools
 import scipy.io
+from statistics import mean
 subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 
-outDir='/projects/p31240/'
-
+outDir='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/subNetwork/ALL/'
+projDir='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/IndNet'
 #group based network
 #dataDir='/projects/b1081/MSC/TaskFC/FC_Parcels_IndNet/'
 #task/allsubs_mem_corrmats_bysess_orig_INDformat.mat
@@ -26,13 +27,13 @@ def netFile(netSpec,sub):
     #fullTask=np.empty((40,120))
     fullRest=np.empty((40,120))
     #memory
-    tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/mem/allsubs_mem_corrmats_bysess_orig_INDformat.mat'
+    tmp=projDir+'/mem/allsubs_mem_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
     fileFC=fileFC['sess_task_corrmat']
     fileFC=fileFC[0,0].AllMem
     fileFC=fileFC[0,subDict[sub]]
     fileFC=np.nan_to_num(fileFC)
-    nrois=16
+    nrois=14
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
@@ -43,15 +44,18 @@ def netFile(netSpec,sub):
         tmp=fileFC[:,:,sess]
         memFC[count]=tmp[mask]
         count=count+1
+    mask = (memFC == 0).all(1)
+    column_indices = np.where(mask)[0]
+    memFC = memFC[~mask,:]
     #fullTask[:10]=ds
     #motor
-    tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/motor/allsubs_motor_corrmats_bysess_orig_INDformat.mat'
+    tmp=projDir+'/motor/allsubs_motor_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
     fileFC=fileFC['sess_task_corrmat']
     fileFC=fileFC[0,0].AllMotor
     fileFC=fileFC[0,subDict[sub]]
     fileFC=np.nan_to_num(fileFC)
-    nrois=16
+    nrois=14
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
@@ -62,15 +66,17 @@ def netFile(netSpec,sub):
         tmp=fileFC[:,:,sess]
         motFC[count]=tmp[mask]
         count=count+1
-    #fullTask[10:20]=ds
+    mask = (motFC == 0).all(1)
+    column_indices = np.where(mask)[0]
+    motFC = motFC[~mask,:]
     #glass
-    tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/mixed/allsubs_mixed_corrmats_bysess_orig_INDformat.mat'
+    tmp=projDir+'/mixed/allsubs_mixed_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
     fileFC=fileFC['sess_task_corrmat']
     fileFC=fileFC[0,0].AllGlass
     fileFC=fileFC[0,subDict[sub]]
     fileFC=np.nan_to_num(fileFC)
-    nrois=16
+    nrois=14
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
@@ -81,15 +87,17 @@ def netFile(netSpec,sub):
         tmp=fileFC[:,:,sess]
         glassFC[count]=tmp[mask]
         count=count+1
-    #fullTask[20:30]=ds
+    mask = (glassFC == 0).all(1)
+    column_indices = np.where(mask)[0]
+    glassFC = glassFC[~mask,:]
     #semantic
-    tmp='/projects/b1081/MSC/TaskFC/FC_Parcels_'+netSpec+'/mixed/allsubs_mixed_corrmats_bysess_orig_INDformat.mat'
+    tmp=projDir+'/mixed/allsubs_mixed_corrmats_bysess_orig_INDformat.mat'
     fileFC=scipy.io.loadmat(tmp,struct_as_record=False,squeeze_me=False)
     fileFC=fileFC['sess_task_corrmat']
     fileFC=fileFC[0,0].AllSemantic
     fileFC=fileFC[0,subDict[sub]]
     fileFC=np.nan_to_num(fileFC)
-    nrois=16
+    nrois=14
     nsess=fileFC.shape[2]
     #Index upper triangle of matrix
     mask=np.triu_indices(nrois,1)
@@ -100,12 +108,14 @@ def netFile(netSpec,sub):
         tmp=fileFC[:,:,sess]
         semFC[count]=tmp[mask]
         count=count+1
-    #fullTask[30:]=ds
+    mask = (semFC == 0).all(1)
+    column_indices = np.where(mask)[0]
+    semFC = semFC[~mask,:]
     fullTask=np.concatenate((memFC,semFC,glassFC,motFC))
     #will have to write something on converting resting time series data into 4 split pieces
     #######################################################################################
     #open rest
-    tmpRest='/projects/p31240/'+netSpec+'_rest/'+sub+'_parcel_corrmat.mat'
+    tmpRest=projDir+'/rest/'+sub+'_parcel_corrmat.mat'
     fileFC=scipy.io.loadmat(tmpRest)
     #Convert to numpy array
     fileFC=np.array(fileFC['parcel_corrmat'])
@@ -121,6 +131,9 @@ def netFile(netSpec,sub):
         tmp=fileFC[:,:,sess]
         fullRest[count]=tmp[mask]
         count=count+1
+    mask = (fullRest == 0).all(1)
+    column_indices = np.where(mask)[0]
+    fullRest = fullRest[~mask,:]
     return fullTask,fullRest
 
 def modelAll(train_sub, test_sub):
@@ -146,8 +159,8 @@ def modelAll(train_sub, test_sub):
     taskFC, restFC=netFile('IndNet',train_sub)
     #test sub
     test_taskFC, test_restFC=netFile('IndNet',test_sub)
-    diff_score, same_score,CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=K_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
-    return diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
+    CV, DS=K_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
+    return CV, DS
 
 def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     """
@@ -167,7 +180,7 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
         List of accuracy for each outer fold
     """
 
-    kf = KFold(n_splits=5)
+    loo = LeaveOneOut()
     taskSize=taskFC.shape[0]
     restSize=restFC.shape[0]
     t = np.ones(taskSize, dtype = int)
@@ -177,14 +190,14 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     testT= np.ones(test_taskSize, dtype = int)
     testR= np.zeros(test_restSize, dtype = int)
     CVacc=[]
-    CVspec=[]
-    CVsen=[]
-    df=pd.DataFrame()
-    acc_score=[]
-    DSspec=[]
-    DSsen=[]
+    #CVspec=[]
+    #CVsen=[]
+    #df=pd.DataFrame()
+    DSacc=[]
+    #DSspec=[]
+    #DSsen=[]
     #fold each training set
-    for train_index, test_index in kf.split(taskFC):
+    for train_index, test_index in loo.split(taskFC):
         Xtrain_rest, Xval_rest=restFC[train_index], restFC[test_index]
         Xtrain_task, Xval_task=taskFC[train_index], taskFC[test_index]
         ytrain_rest, yval_rest=r[train_index], r[test_index]
@@ -195,62 +208,50 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
         y_val=np.concatenate((yval_task, yval_rest))
         clf.fit(X_tr,y_tr)
         #cross validation
-        y_pred=clf.predict(X_val)
+        #y_pred=clf.predict(X_val)
         #Test labels and predicted labels to calculate sensitivity specificity
-        tn, fp, fn, tp=confusion_matrix(y_val, y_pred).ravel()
-        CV_specificity= tn/(tn+fp)
-        CV_sensitivity= tp/(tp+fn)
+        #tn, fp, fn, tp=confusion_matrix(y_val, y_pred).ravel()
+        #CV_specificity= tn/(tn+fp)
+        #CV_sensitivity= tp/(tp+fn)
         #get accuracy
         CV_score=clf.score(X_val, y_val)
         CVacc.append(CV_score)
-        CVspec.append(CV_specificity)
-        CVsen.append(CV_sensitivity)
-        tmpdf=pd.DataFrame()
-        acc_scores_per_fold=[]
-        sen_scores_per_fold=[]
-        spec_scores_per_fold=[]
+        #CVspec.append(CV_specificity)
+        #CVsen.append(CV_sensitivity)
+        #tmpdf=pd.DataFrame()
+        #acc_scores_per_fold=[]
+        #sen_scores_per_fold=[]
+        #spec_scores_per_fold=[]
         #fold each testing set
-        for t_index, te_index in kf.split(test_taskFC):
-            Xtest_rest=test_restFC[te_index]
-            Xtest_task=test_taskFC[te_index]
-            X_te=np.concatenate((Xtest_task, Xtest_rest))
-            ytest_task=testT[te_index]
-            ytest_rest=testR[te_index]
-            y_te=np.concatenate((ytest_task, ytest_rest))
-            #test set
-            y_pred_testset=clf.predict(X_te)
-            #Test labels and predicted labels to calculate sensitivity specificity
-            DStn, DSfp, DSfn, DStp=confusion_matrix(y_te, y_pred_testset).ravel()
-            DS_specificity= DStn/(DStn+DSfp)
-            DS_sensitivity= DStp/(DStp+DSfn)
-            #Get accuracy of model
-            ACCscores=clf.score(X_te,y_te)
-            acc_scores_per_fold.append(ACCscores)
-            sen_scores_per_fold.append(DS_sensitivity)
-            spec_scores_per_fold.append(DS_specificity)
-        tmpdf['inner_fold']=acc_scores_per_fold
-        tmpdf['DS_sen']=sen_scores_per_fold
-        tmpdf['DS_spec']=spec_scores_per_fold
-        score=tmpdf['inner_fold'].mean()
-        sen=tmpdf['DS_sen'].mean()
-        spec=tmpdf['DS_spec'].mean()
-        acc_score.append(score)
-        DSspec.append(spec)
-        DSsen.append(sen)
-    df['cv']=CVacc
-    df['CV_sen']=CVsen
-    df['CV_spec']=CVspec
+        X_te=np.concatenate((test_taskFC, test_restFC))
+        y_te=np.concatenate((testT, testR))
+        #y_pred_testset=clf.predict(X_te)
+        #Test labels and predicted labels to calculate sensitivity specificity
+        #DStn, DSfp, DSfn, DStp=confusion_matrix(y_te, y_pred_testset).ravel()
+        #DS_specificity= DStn/(DStn+DSfp)
+        #DS_sensitivity= DStp/(DStp+DSfn)
+        #Get accuracy of model
+        ACCscores=clf.score(X_te,y_te)
+        DSacc.append(ACCscores)
+
+
+    #df['cv']=CVacc
+    CV=mean(CVacc)
+    DS=mean(DSacc)
+    #df['CV_sen']=CVsen
+    #df['CV_spec']=CVspec
     #Different sub outer acc
-    df['outer_fold']=acc_score
-    df['DS_sen']=DSsen
-    df['DS_spec']=DSspec
-    same_sub_score=df['cv'].mean()
-    diff_sub_score=df['outer_fold'].mean()
-    CV_sens_score=df['CV_sen'].mean()
-    CV_spec_score=df['CV_spec'].mean()
-    DS_sens_score=df['DS_sen'].mean()
-    DS_spec_score=df['DS_spec'].mean()
-    return diff_sub_score, same_sub_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
+    #df['outer_fold']=acc_score
+    #df['DS_sen']=DSsen
+    #df['DS_spec']=DSspec
+    #same_sub_score=df['cv'].mean()
+    #diff_sub_score=df['outer_fold'].mean()
+    #CV_sens_score=df['CV_sen'].mean()
+    #CV_spec_score=df['CV_spec'].mean()
+    #DS_sens_score=df['DS_sen'].mean()
+    #DS_spec_score=df['DS_spec'].mean()
+    return CV, DS
+    #return diff_sub_score, same_sub_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
 
 
 
@@ -267,27 +268,25 @@ def classifyIndNet():
         Dataframe consisting of average accuracy across all subjects
 
     """
-    acc_scores_per_sub=[]
-    sen_scores_per_sub=[]
-    spec_scores_per_sub=[]
+    acc_scores_ds=[]
+    #sen_scores_per_sub=[]
+    #spec_scores_per_sub=[]
     acc_scores_cv=[]
-    sen_scores_cv=[]
-    spec_scores_cv=[]
+    #sen_scores_cv=[]
+    #spec_scores_cv=[]
     df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
     for index, row in df.iterrows():
-        diff_score, same_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
-        acc_scores_per_sub.append(diff_score)
-        acc_scores_cv.append(same_score)
-        sen_scores_cv.append(CV_sens_score)
-        spec_scores_cv.append(CV_spec_score)
-        sen_scores_per_sub.append(DS_sens_score)
-        spec_scores_per_sub.append(DS_spec_score)
-    df['cv_acc']=acc_scores_cv
-    df['cv_sen']=sen_scores_cv
-    df['cv_spec']=spec_scores_cv
-    df['acc']=acc_scores_per_sub
-    df['ds_sen']=sen_scores_per_sub
-    df['ds_spec']=spec_scores_per_sub
-    df.to_csv('/projects/p31240/acc/IndNet/acc.csv',index=False)
-
-classifyIndNet()
+        CV,DS=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
+        acc_scores_ds.append(DS)
+        acc_scores_cv.append(CV)
+        #sen_scores_cv.append(CV_sens_score)
+        #spec_scores_cv.append(CV_spec_score)
+        #sen_scores_per_sub.append(DS_sens_score)
+        #spec_scores_per_sub.append(DS_spec_score)
+    df['cv']=acc_scores_cv
+    #df['cv_sen']=sen_scores_cv
+    #df['cv_spec']=spec_scores_cv
+    df['ds']=acc_scores_ds
+    #df['ds_sen']=sen_scores_per_sub
+    #df['ds_spec']=spec_scores_per_sub
+    df.to_csv(outDir+'IndNet.csv',index=False)

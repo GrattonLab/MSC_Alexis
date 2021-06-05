@@ -36,7 +36,7 @@ from sklearn.linear_model import LogisticRegression
 #thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 thisDir = os.path.expanduser('~/Desktop/MSC_Alexis/analysis/')
 dataDir = thisDir + 'data/mvpa_data/'
-outDir = thisDir + 'output/results/Log/acc/'
+outDir = thisDir + 'output/FigsFinal/'
 # Subjects and tasks
 #combining figures
 
@@ -693,10 +693,16 @@ def multiclassAll():
     #clf=LinearSVC()
     all_CM_DS=np.zeros((5,5))
     all_CM_CV=np.zeros((5,5))
-    fig=plt.figure(figsize=(25,20), constrained_layout=True)
-    plt.rcParams['figure.constrained_layout.use'] = True
+    fig=plt.figure(figsize=(25,20))#, constrained_layout=True)
+    fig.text(.08, 1.05, 'a',fontsize=28)
+    fig.text(.45, 1.05, 'Same Person',fontsize=28)
+    fig.text(.08, .48, 'b',fontsize=28)
+    fig.text(.43, .48, 'Different Person',fontsize=28)
+    #plt.rcParams['figure.constrained_layout.use'] = True
 #Add grid space for subplots 1 rows by 3 columns
-    gs = gridspec.GridSpec(nrows=4, ncols=4)
+    #gs = gridspec.GridSpec(nrows=4, ncols=4)
+    gs00 = fig.add_gridspec(nrows=2, ncols=4,top=1, bottom=.55,wspace=0.1, hspace=0.13)
+    gs01 = fig.add_gridspec(nrows=2, ncols=4, top=.45, bottom=0,wspace=0.1, hspace=0.13)
     b=0
     #clf=LogisticRegression(solver = 'lbfgs')
     #clf=LinearSVC()
@@ -722,42 +728,73 @@ def multiclassAll():
         #test sub
         testFC,ytest=AllSubFiles(test_sub)
         same_Tsub, diff_Tsub,sameF,diffF,sameMCC, diffMCC, same_sub_CM, DS_cm=K_folds_MC(train_sub, clf, memFC,semFC,glassFC,motFC, restFC, testFC, ytest)
-
+        DS=DS_cm / DS_cm.astype(np.float).sum(axis=1)
+        CV=same_sub_CM / same_sub_CM.astype(np.float).sum(axis=1)
         if b<4:
             a=0
-            ax=fig.add_subplot(gs[a,b])
-            ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax)
-            plt.xlabel(' ',fontsize=15)
-            plt.xticks(fontsize=10)
-            plt.yticks(fontsize=12)
-            plt.title(train_sub[0],fontsize=17)
+            ax1=fig.add_subplot(gs00[a,b])
+            ax=ConfusionMatrixDisplay(CV,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax1)
+            ax1.set_xlabel(' ')
+            plt.title(train_sub[0],fontsize=25)
+
+            ax2=fig.add_subplot(gs01[a,b])
+            ax=ConfusionMatrixDisplay(DS,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax2)
+            ax2.set_xlabel(' ')
+            plt.title(train_sub[0],fontsize=25)
             if b==0:
-                plt.ylabel('True Label',fontsize=15)
+                ax1.set_ylabel('True Label',fontsize=25)
+                ax2.set_ylabel('True Label',fontsize=25)
+                ax1.tick_params(labelsize=25)
+                ax2.tick_params(labelsize=25)
+                plt.setp(ax1.get_xticklabels(), visible=False)
+                plt.setp(ax2.get_xticklabels(), visible=False)
             else:
-                plt.ylabel(' ',fontsize=15)
+                ax1.set_ylabel(' ')
+                ax2.set_ylabel(' ')
+                plt.setp(ax1.get_xticklabels(), visible=False)
+                plt.setp(ax2.get_xticklabels(), visible=False)
+                plt.setp(ax1.get_yticklabels(), visible=False)
+                plt.setp(ax2.get_yticklabels(), visible=False)
             b=b+1
         else:
             a=1
             c=b-4
-            ax=fig.add_subplot(gs[a,c])
-            ax=ConfusionMatrixDisplay(same_sub_CM,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax)
-            plt.ylabel('True Label',fontsize=15)
-            plt.xlabel('Predicted Label',fontsize=15)
-            plt.xticks(fontsize=10)
-            plt.yticks(fontsize=12)
-            plt.title(train_sub[0],fontsize=17)
+            ax1=fig.add_subplot(gs00[a,c])
+            ax=ConfusionMatrixDisplay(CV,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax1)
+            ax1.set_xlabel(' ')
+            plt.title(train_sub[0],fontsize=25)
+
+            ax2=fig.add_subplot(gs01[a,c])
+            ax=ConfusionMatrixDisplay(DS,display_labels=["Rest","Memory","Semantic","Motor", "Coherence"]).plot(cmap=plt.cm.Blues,colorbar=False,ax=ax2)
+            plt.xlabel('Predicted Label',fontsize=25)
+            plt.title(train_sub[0],fontsize=25)
             if c==0:
-                plt.ylabel('True Label',fontsize=15)
+                ax1.set_ylabel('True Label',fontsize=25)
+                ax2.set_ylabel('True Label',fontsize=25)
+                plt.xticks(rotation=90)
+                ax1.tick_params(labelsize=25)
+                ax2.tick_params(labelsize=25)
+                plt.setp(ax1.get_xticklabels(), visible=False)
+                #plt.setp(ax2.get_xticklabels(), visible=False)
             else:
-                plt.ylabel(' ',fontsize=15)
+                ax1.set_ylabel('')
+                ax2.set_ylabel('')
+                plt.setp(ax1.get_xticklabels(), visible=False)
+                #plt.setp(ax2.get_xticklabels(), visible=False)
+                plt.setp(ax1.get_yticklabels(), visible=False)
+                plt.setp(ax2.get_yticklabels(), visible=False)
+                ax2.tick_params(labelsize=25)
+                plt.xticks(rotation=90)
             b=b+1
+
+    plt.savefig(outDir+'MC_allSubs.png', bbox_inches='tight')
 
         all_CM_DS=DS_cm+all_CM_DS
         all_CM_CV=same_sub_CM+all_CM_CV
-    #plt.savefig(outDir+'ALL/MC/same/allSubs.png', bbox_inches='tight')
-    finalDS=all_CM_DS / all_CM_DS.astype(np.float).sum(axis=1)
-    finalCV=all_CM_CV / all_CM_CV.astype(np.float).sum(axis=1)
-    return finalDS, finalCV
+
+    #finalDS=all_CM_DS / all_CM_DS.astype(np.float).sum(axis=1)
+    #finalCV=all_CM_CV / all_CM_CV.astype(np.float).sum(axis=1)
+    #return finalDS, finalCV
     #finalDS.tofile(outDir+'ALL/finalDS.csv',sep=',')
     #finalCV.tofile(outDir+'ALL/finalCV.csv',sep=',')
     """

@@ -119,6 +119,7 @@ def model(train_task):
     #test on new task of left out sub
     clf=RidgeClassifier()
     loo = LeaveOneOut()
+    wtn_scoreList=[]
     for i in range(8):
     #takes one session of data (7 subs)
         taskFC=ds_T[i,:,:]
@@ -130,7 +131,7 @@ def model(train_task):
         t = np.ones(taskSize, dtype = int)
         r=np.zeros(restSize, dtype=int)
         #df=pd.DataFrame()
-        wtn_scoreList=[]
+
         #btn_scoreList=[]
     #fold each training set (sub)
         for train_index, test_index in loo.split(taskFC):
@@ -157,4 +158,5 @@ def model(train_task):
     wtn_score=mean(wtn_scoreList)
     #df['btn_fold']=btn_scoreList
     #btn_score=df['btn_fold'].mean()
+    #return wtn_scoreList
     return wtn_score#, btn_score
