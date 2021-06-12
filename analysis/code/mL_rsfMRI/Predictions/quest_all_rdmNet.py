@@ -179,7 +179,7 @@ def modelAll(feat,number):
     """
     #clf=LinearSVC()
     #clf=LogisticRegression(solver = 'lbfgs')
-    clf=RidgeClassifier()
+    #clf=RidgeClassifier()
     #train sub
     clf=RidgeClassifier(max_iter=10000)
     master_df=pd.DataFrame()

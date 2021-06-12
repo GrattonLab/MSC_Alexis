@@ -787,14 +787,14 @@ def multiclassAll():
                 plt.xticks(rotation=90)
             b=b+1
 
-    plt.savefig(outDir+'MC_allSubs.png', bbox_inches='tight')
+    #plt.savefig(outDir+'MC_allSubs.png', bbox_inches='tight')
 
         all_CM_DS=DS_cm+all_CM_DS
         all_CM_CV=same_sub_CM+all_CM_CV
 
-    #finalDS=all_CM_DS / all_CM_DS.astype(np.float).sum(axis=1)
-    #finalCV=all_CM_CV / all_CM_CV.astype(np.float).sum(axis=1)
-    #return finalDS, finalCV
+    finalDS=all_CM_DS / all_CM_DS.astype(np.float).sum(axis=1)
+    finalCV=all_CM_CV / all_CM_CV.astype(np.float).sum(axis=1)
+    return finalDS, finalCV
     #finalDS.tofile(outDir+'ALL/finalDS.csv',sep=',')
     #finalCV.tofile(outDir+'ALL/finalCV.csv',sep=',')
     """

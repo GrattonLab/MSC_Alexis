@@ -56,22 +56,22 @@ def permuteProcess():
     #CVtotal=pd.DataFrame()
     DStotal=pd.DataFrame()
     #SStotal=pd.DataFrame()
-    BStotal=pd.DataFrame()
+    #BStotal=pd.DataFrame()
     #ALLtotal=pd.DataFrame()
-    for i in range(18):
+    for i in range(1000):
         #CV=classifyCV()
         #CVtotal=pd.concat([CVtotal,CV])
-        #DS=classifyDS()
-        #DStotal=pd.concat([DStotal,DS])
-        SS=classifySS()
-        SStotal=pd.concat([SStotal,SS])
+        DS=classifyDS()
+        DStotal=pd.concat([DStotal,DS])
+        #SS=classifySS()
+        #SStotal=pd.concat([SStotal,SS])
         #BS=classifyBS()
         #BStotal=pd.concat([BStotal,BS])
         #ALL=classifyAll()
         #ALLtotal=pd.concat([ALLtotal,ALL])
-    #DStotal.to_csv(outDir+'DS/acc.csv',index=False)
+    DStotal.to_csv(outDir+'DS/acc.csv',index=False)
     #CVtotal.to_csv(outDir+'CV/acc.csv',index=False)
-    SStotal.to_csv(outDir+'SS/acc.csv',index=False)
+    #SStotal.to_csv(outDir+'SS/acc.csv',index=False)
     #BStotal.to_csv(outDir+'BS/acc.csv',index=False)
     #ALLtotal.to_csv(outDir+'ALL/acc.csv',index=False)
 def classifyDS():
@@ -97,7 +97,9 @@ def classifyDS():
         total_score=model(train_sub=row['train_sub'], test_sub=row['test_sub'], train_task=row['task'], test_task=row['task'])
         acc_scores_per_task.append(total_score)
     dfDS['acc']=acc_scores_per_task
-    return dfDS
+    df=dfDS.groupby(['train_task']).mean()
+    df.reset_index(inplace=True)
+    return df
 
 def classifySS():
     """

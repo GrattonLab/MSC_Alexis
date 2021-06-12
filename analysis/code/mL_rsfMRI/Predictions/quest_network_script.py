@@ -11,7 +11,7 @@ subList=['MSC01','MSC02','MSC03','MSC04','MSC05','MSC06','MSC07','MSC10']
 #all possible combinations of subs and tasks
 subsComb=(list(itertools.permutations(subList, 2)))
 
-outDir='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/subNetwork/ALL/'
+outDir='/Users/Alexis/Desktop/MSC_Alexis/analysis/output/results/acc/'
 projDir='/Users/Alexis/Desktop/MSC_Alexis/analysis/data/IndNet'
 #group based network
 #dataDir='/projects/b1081/MSC/TaskFC/FC_Parcels_IndNet/'
@@ -154,13 +154,12 @@ def modelAll(train_sub, test_sub):
 
     """
     clf=RidgeClassifier()
-    df=pd.DataFrame()
     #train sub
     taskFC, restFC=netFile('IndNet',train_sub)
     #test sub
     test_taskFC, test_restFC=netFile('IndNet',test_sub)
-    CV, DS=K_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
-    return CV, DS
+    CV, DS, SS_TPV, SS_RPV, OS_TPV, OS_RPV=K_folds(clf, taskFC, restFC, test_taskFC, test_restFC)
+    return CV, DS, SS_TPV, SS_RPV, OS_TPV, OS_RPV
 
 def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     """
@@ -190,10 +189,14 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     testT= np.ones(test_taskSize, dtype = int)
     testR= np.zeros(test_restSize, dtype = int)
     CVacc=[]
+    CVTPV=[]
+    CVRPV=[]
     #CVspec=[]
     #CVsen=[]
     #df=pd.DataFrame()
     DSacc=[]
+    DSTPV=[]
+    DSRPV=[]
     #DSspec=[]
     #DSsen=[]
     #fold each training set
@@ -208,14 +211,26 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
         y_val=np.concatenate((yval_task, yval_rest))
         clf.fit(X_tr,y_tr)
         #cross validation
-        #y_pred=clf.predict(X_val)
+        y_pred=clf.predict(X_val)
+
         #Test labels and predicted labels to calculate sensitivity specificity
-        #tn, fp, fn, tp=confusion_matrix(y_val, y_pred).ravel()
-        #CV_specificity= tn/(tn+fp)
-        #CV_sensitivity= tp/(tp+fn)
+        tn, fp, fn, tp=confusion_matrix(y_val, y_pred).ravel()
+        pos=tp+fp
+        neg=tn+fn
+        if pos == 0:
+            TPV=0 #can't divide by zero
+        else:
+            TPV=tp/(tp+fp)
+        if neg == 0:
+            RPV=0
+        else:
+            RPV=tn/(tn+fn)
+
         #get accuracy
         CV_score=clf.score(X_val, y_val)
         CVacc.append(CV_score)
+        CVTPV.append(TPV)
+        CVRPV.append(RPV)
         #CVspec.append(CV_specificity)
         #CVsen.append(CV_sensitivity)
         #tmpdf=pd.DataFrame()
@@ -225,9 +240,13 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
         #fold each testing set
         X_te=np.concatenate((test_taskFC, test_restFC))
         y_te=np.concatenate((testT, testR))
-        #y_pred_testset=clf.predict(X_te)
+        y_pred_testset=clf.predict(X_te)
         #Test labels and predicted labels to calculate sensitivity specificity
-        #DStn, DSfp, DSfn, DStp=confusion_matrix(y_te, y_pred_testset).ravel()
+        DStn, DSfp, DSfn, DStp=confusion_matrix(y_te, y_pred_testset).ravel()
+        DS_TPV=DStp/(DStp+DSfp)
+        DS_RPV=DStn/(DStn+DSfn)
+        DSTPV.append(DS_TPV)
+        DSRPV.append(DS_RPV)
         #DS_specificity= DStn/(DStn+DSfp)
         #DS_sensitivity= DStp/(DStp+DSfn)
         #Get accuracy of model
@@ -238,6 +257,10 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     #df['cv']=CVacc
     CV=mean(CVacc)
     DS=mean(DSacc)
+    SS_TPV=mean(CVTPV)
+    SS_RPV=mean(CVRPV)
+    OS_TPV=mean(DSTPV)
+    OS_RPV=mean(DSRPV)
     #df['CV_sen']=CVsen
     #df['CV_spec']=CVspec
     #Different sub outer acc
@@ -250,7 +273,7 @@ def K_folds(clf, taskFC, restFC, test_taskFC, test_restFC):
     #CV_spec_score=df['CV_spec'].mean()
     #DS_sens_score=df['DS_sen'].mean()
     #DS_spec_score=df['DS_spec'].mean()
-    return CV, DS
+    return CV, DS, SS_TPV, SS_RPV, OS_TPV, OS_RPV
     #return diff_sub_score, same_sub_score, CV_sens_score, CV_spec_score, DS_sens_score, DS_spec_score
 
 
@@ -269,24 +292,36 @@ def classifyIndNet():
 
     """
     acc_scores_ds=[]
+    tpv_ds=[]
+    rpv_ds=[]
     #sen_scores_per_sub=[]
     #spec_scores_per_sub=[]
     acc_scores_cv=[]
+    tpv_cv=[]
+    rpv_cv=[]
     #sen_scores_cv=[]
     #spec_scores_cv=[]
     df=pd.DataFrame(subsComb, columns=['train_sub','test_sub'])
     for index, row in df.iterrows():
-        CV,DS=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
+        CV, DS, SS_TPV, SS_RPV, OS_TPV, OS_RPV=modelAll(train_sub=row['train_sub'], test_sub=row['test_sub'])
         acc_scores_ds.append(DS)
         acc_scores_cv.append(CV)
+        tpv_ds.append(OS_TPV)
+        rpv_ds.append(OS_RPV)
+        tpv_cv.append(SS_TPV)
+        rpv_cv.append(SS_RPV)
         #sen_scores_cv.append(CV_sens_score)
         #spec_scores_cv.append(CV_spec_score)
         #sen_scores_per_sub.append(DS_sens_score)
         #spec_scores_per_sub.append(DS_spec_score)
     df['cv']=acc_scores_cv
+    df['cv_tpv']=tpv_cv
+    df['cv_rpv']=rpv_cv
     #df['cv_sen']=sen_scores_cv
     #df['cv_spec']=spec_scores_cv
     df['ds']=acc_scores_ds
+    df['ds_tpv']=tpv_ds
+    df['ds_rpv']=rpv_ds
     #df['ds_sen']=sen_scores_per_sub
     #df['ds_spec']=spec_scores_per_sub
-    df.to_csv(outDir+'IndNet.csv',index=False)
+    df.to_csv(outDir+'ALL/IndNet/acc.csv',index=False)
