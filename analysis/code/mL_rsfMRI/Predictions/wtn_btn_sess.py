@@ -31,7 +31,7 @@ tasksComb=(list(itertools.permutations(taskList, 2)))
 
 def groupApp():
     """
-    Classifying using all subs testing unseen sub on same task and diff task
+    Classifying using all subs testing unseen sub on same task 
 
     Parameters
     -------------
